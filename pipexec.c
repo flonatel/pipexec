@@ -408,7 +408,7 @@ int main(int argc, char * argv[]) {
       }
    }
 
-   logging("pexec version %d.%d", app_version, app_subversion);
+   logging("pipexec version %d.%d", app_version, app_subversion);
    logging("(c) 2014 by flonatel GmbH & Co, KG");
    logging("License GPLv2+: GNU GPL version 2 or later "
            "<http://gnu.org/licenses/gpl.html>.");
