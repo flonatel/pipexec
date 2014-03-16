@@ -15,6 +15,9 @@ Depending on your distribution you can be happy if it starts up - but
 when it comes to stopping, at least the current Debian
 start-stop-daemon and RHEL 6 daemon function fail.
 
+# Status
+It's alpha.
+
 # Purpose
 *pipexec* was designed to handle a hole pipe of commands to behave
 like a single command.
