@@ -1,5 +1,3 @@
-// gcc -ggdb -std=c99 -Wall -Wextra pexec.c -o pexec
-
 #define _POSIX_C_SOURCE 200809L
 
 #include <sys/types.h>
