@@ -3,6 +3,9 @@ pipexec
 
 Handling pipe of commands like a single command
 
+[![Build
+Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org/flonatel/pipexec)
+
 # Introduction
 Most systems to start and run processes during system start-up time do
 not support pipe.  If you need to run a pipe of programs from an
