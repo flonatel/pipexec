@@ -1,7 +1,9 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -12,7 +14,7 @@
 #include <time.h>
 
 int const app_version = 1;
-int const app_subversion = 2;
+int const app_subversion = 3;
 
 char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
 char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
@@ -395,23 +397,54 @@ static void usage() {
    fprintf(stderr, "Options:\n");
    fprintf(stderr, " -h              display this help\n");
    fprintf(stderr, " -l logfd        set fd which is used for logging\n");
+   fprintf(stderr, " -p pidfile      specify a pidfile\n");
    fprintf(stderr, " -s sleep_time   time to wait before a restart\n");
    exit(1);
+}
+
+static void write_pid_file(char const * const pid_file) {
+   logging("Writing pid file [%s]: [%d]", pid_file, getpid());
+   char pbuf[20];
+   int const plen = snprintf(pbuf, 20, "%d\n", getpid());
+   int const fd = open(pid_file, O_WRONLY | O_CREAT | O_TRUNC,
+                       S_IRUSR | S_IRGRP | S_IROTH);
+   if(fd==-1) {
+      logging("Cannot open pid file, reason [%s]", strerror(errno));
+      close(fd);
+      return;
+   }
+   ssize_t const written = write(fd, pbuf, plen);
+   if(written!=plen) {
+      logging("Write error [%s]", strerror(errno));
+   }
+   close(fd);
+}
+
+static void remove_pid_file(char const * const pid_file) {
+   logging("Removing pid file [%s]: [%d]", pid_file, getpid());
+   int const rval = unlink(pid_file);
+   if(rval==-1) {
+      logging("Cannot remove pid file, reason [%s]", strerror(errno));
+   }
 }
 
 int main(int argc, char * argv[]) {
 
    int logfd = -1;
    int sleep_timer = 0;
+   char * pid_file = NULL;
 
    int opt;
-   while ((opt = getopt(argc, argv, "hl:s:-")) != -1) {
+   while ((opt = getopt(argc, argv, "hl:p:s:-")) != -1) {
       switch (opt) {
       case 'h':
          usage();
       case 'l':
          logfd = atoi(optarg);
          log_fd_set(logfd);
+         break;
+      case 'p':
+         pid_file = optarg;
          break;
       case 's':
          sleep_timer = atoi(optarg);
@@ -432,6 +465,10 @@ int main(int argc, char * argv[]) {
    logging("pipexec version %d.%d", app_version, app_subversion);
    logging(desc_copyight);
    logging(desc_license);
+
+   if(pid_file!=NULL) {
+      write_pid_file(pid_file);
+   }
 
    install_signal_handler();
 
@@ -500,6 +537,10 @@ int main(int argc, char * argv[]) {
          }
       }
    } while( g_restart );
+
+   if(pid_file!=NULL) {
+      remove_pid_file(pid_file);
+   }
 
    logging("exiting");
 
