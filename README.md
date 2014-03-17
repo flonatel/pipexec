@@ -15,9 +15,6 @@ Depending on your distribution you can be happy if it starts up - but
 when it comes to stopping, at least the current Debian
 start-stop-daemon and RHEL 6 daemon function fail.
 
-# Status
-It's alpha.
-
 # Purpose
 *pipexec* was designed to handle a hole pipe of commands to behave
 like a single command.
@@ -29,6 +26,21 @@ pipe of commands is restarted. When one command in the pipe exits with
 a signal, the pipe of commands is restarted.
 
 # Usage
+    $ ./pipexec -h
+    pipexec version 1.4
+    (c) 2014 by flonatel GmbH & Co, KG
+    License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
+    
+    Usage: pipexec [options] -- command-pipe
+    Options:
+     -h              display this help
+     -l logfd        set fd which is used for logging
+     -n name         set the name of the process
+     -p pidfile      specify a pidfile
+     -s sleep_time   time to wait before a restart
+
+Example:
+
     $ pipexec /bin/ls -l "|" /bin/grep LIC
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:36 LICENSE
 
