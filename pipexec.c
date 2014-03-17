@@ -1,7 +1,10 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/prctl.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -12,7 +15,11 @@
 #include <time.h>
 
 int const app_version = 1;
-int const app_subversion = 0;
+int const app_subversion = 4;
+
+char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
+char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
+                             "<http://gnu.org/licenses/gpl.html>." };
 
 /**
  * Logging is done by means of an additional file descriptor
@@ -37,7 +44,7 @@ unsigned long log_fd_write_pname_and_pid(char * buf, unsigned long free_bytes) {
 }
 
 unsigned long log_fd_write_args(char * buf, unsigned long free_bytes,
-                                char * fmt, va_list ap) {
+                                char const * fmt, va_list ap) {
    return vsnprintf(buf, free_bytes, fmt, ap);
 }
 
@@ -50,7 +57,7 @@ unsigned long log_fd_write_newline(char * buf, unsigned long free_bytes) {
  * The format of a logging line contains the date and time,
  * the pid of this process and the passed in parameters.
  */
-void logging(char * fmt, ...) {
+void logging(char const * fmt, ...) {
    if(g_log_fd==-1) {
       return;
    }
@@ -90,7 +97,7 @@ volatile int g_terminate = 0;
  */
 void set_restart(int rs) {
    if(g_terminate) {
-      logging("Cannt set restart - process will terminate\n");
+      logging("Cannt set restart - process will terminate");
       return;
    }
    g_restart = rs;
@@ -382,34 +389,100 @@ unsigned int next_running_child() {
 }
 
 
+static void usage() {
+   fprintf(stderr, "pipexec version %d.%d\n", app_version, app_subversion);
+   fprintf(stderr, "%s\n", desc_copyight);
+   fprintf(stderr, "%s\n", desc_license);
+   fprintf(stderr, "\n");
+   fprintf(stderr, "Usage: pipexec [options] -- command-pipe\n");
+   fprintf(stderr, "Options:\n");
+   fprintf(stderr, " -h              display this help\n");
+   fprintf(stderr, " -l logfd        set fd which is used for logging\n");
+   fprintf(stderr, " -n name         set the name of the process\n");
+   fprintf(stderr, " -p pidfile      specify a pidfile\n");
+   fprintf(stderr, " -s sleep_time   time to wait before a restart\n");
+   exit(1);
+}
+
+static void write_pid_file(char const * const pid_file) {
+   logging("Writing pid file [%s]: [%d]", pid_file, getpid());
+   char pbuf[20];
+   int const plen = snprintf(pbuf, 20, "%d\n", getpid());
+   int const fd = open(pid_file, O_WRONLY | O_CREAT | O_TRUNC,
+                       S_IRUSR | S_IRGRP | S_IROTH);
+   if(fd==-1) {
+      logging("Cannot open pid file, reason [%s]", strerror(errno));
+      close(fd);
+      return;
+   }
+   ssize_t const written = write(fd, pbuf, plen);
+   if(written!=plen) {
+      logging("Write error [%s]", strerror(errno));
+   }
+   close(fd);
+}
+
+static void remove_pid_file(char const * const pid_file) {
+   logging("Removing pid file [%s]: [%d]", pid_file, getpid());
+   int const rval = unlink(pid_file);
+   if(rval==-1) {
+      logging("Cannot remove pid file, reason [%s]", strerror(errno));
+   }
+}
+
 int main(int argc, char * argv[]) {
 
    int logfd = -1;
    int sleep_timer = 0;
+   char * pid_file = NULL;
+   char * proc_name = NULL;
 
    int opt;
-   while ((opt = getopt(argc, argv, "l:s:-")) != -1) {
+   while ((opt = getopt(argc, argv, "hl:n:p:s:-")) != -1) {
       switch (opt) {
+      case 'h':
+         usage();
       case 'l':
          logfd = atoi(optarg);
          log_fd_set(logfd);
+         break;
+      case 'n':
+         proc_name = optarg;
+         break;
+      case 'p':
+         pid_file = optarg;
          break;
       case 's':
          sleep_timer = atoi(optarg);
          break;
       case '-':
          // The rest are commands.....
+         break;
       default: /* '?' */
-         fprintf(stderr, "Usage: %s [-l logfd] [-s sleep] -- commands\n",
-                 argv[0]);
-         exit(EXIT_FAILURE);
+         usage();
       }
    }
 
+   if(optind==argc) {
+      fprintf(stderr, "Error: No command-pipe given\n");
+      usage();
+   }
+
    logging("pipexec version %d.%d", app_version, app_subversion);
-   logging("(c) 2014 by flonatel GmbH & Co, KG");
-   logging("License GPLv2+: GNU GPL version 2 or later "
-           "<http://gnu.org/licenses/gpl.html>.");
+   logging(desc_copyight);
+   logging(desc_license);
+
+   if(pid_file!=NULL) {
+      write_pid_file(pid_file);
+   }
+
+   if(proc_name!=NULL) {
+      logging("Setting process name to [%s]", proc_name);
+      int const rp = prctl(PR_SET_NAME, (unsigned long) proc_name, 0, 0, 0);
+      if(rp==-1) {
+         logging("Setting of process name failed [%s]", strerror(errno));
+      }
+   }
 
    install_signal_handler();
 
@@ -478,6 +551,10 @@ int main(int argc, char * argv[]) {
          }
       }
    } while( g_restart );
+
+   if(pid_file!=NULL) {
+      remove_pid_file(pid_file);
+   }
 
    logging("exiting");
 
