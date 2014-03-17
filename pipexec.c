@@ -12,7 +12,11 @@
 #include <time.h>
 
 int const app_version = 1;
-int const app_subversion = 0;
+int const app_subversion = 1;
+
+char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
+char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
+                             "<http://gnu.org/licenses/gpl.html>." };
 
 /**
  * Logging is done by means of an additional file descriptor
@@ -37,7 +41,7 @@ unsigned long log_fd_write_pname_and_pid(char * buf, unsigned long free_bytes) {
 }
 
 unsigned long log_fd_write_args(char * buf, unsigned long free_bytes,
-                                char * fmt, va_list ap) {
+                                char const * fmt, va_list ap) {
    return vsnprintf(buf, free_bytes, fmt, ap);
 }
 
@@ -50,7 +54,7 @@ unsigned long log_fd_write_newline(char * buf, unsigned long free_bytes) {
  * The format of a logging line contains the date and time,
  * the pid of this process and the passed in parameters.
  */
-void logging(char * fmt, ...) {
+void logging(char const * fmt, ...) {
    if(g_log_fd==-1) {
       return;
    }
@@ -382,14 +386,29 @@ unsigned int next_running_child() {
 }
 
 
+static void usage() {
+   fprintf(stderr, "pipexec version %d.%d\n", app_version, app_subversion);
+   fprintf(stderr, "%s\n", desc_copyight);
+   fprintf(stderr, "%s\n", desc_license);
+   fprintf(stderr, "\n");
+   fprintf(stderr, "Usage: pipexec [options] -- command-pipe\n");
+   fprintf(stderr, "Options:\n");
+   fprintf(stderr, " -h              display this help\n");
+   fprintf(stderr, " -l logfd        set fd which is used for logging\n");
+   fprintf(stderr, " -s sleep_time   time to wait before a restart\n");
+   exit(1);
+}
+
 int main(int argc, char * argv[]) {
 
    int logfd = -1;
    int sleep_timer = 0;
 
    int opt;
-   while ((opt = getopt(argc, argv, "l:s:-")) != -1) {
+   while ((opt = getopt(argc, argv, "hl:s:-")) != -1) {
       switch (opt) {
+      case 'h':
+         usage();
       case 'l':
          logfd = atoi(optarg);
          log_fd_set(logfd);
@@ -399,17 +418,15 @@ int main(int argc, char * argv[]) {
          break;
       case '-':
          // The rest are commands.....
+         break;
       default: /* '?' */
-         fprintf(stderr, "Usage: %s [-l logfd] [-s sleep] -- commands\n",
-                 argv[0]);
-         exit(EXIT_FAILURE);
+         usage();
       }
    }
 
    logging("pipexec version %d.%d", app_version, app_subversion);
-   logging("(c) 2014 by flonatel GmbH & Co, KG");
-   logging("License GPLv2+: GNU GPL version 2 or later "
-           "<http://gnu.org/licenses/gpl.html>.");
+   logging(desc_copyight);
+   logging(desc_license);
 
    install_signal_handler();
 
