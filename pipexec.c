@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +15,7 @@
 #include <time.h>
 
 int const app_version = 1;
-int const app_subversion = 3;
+int const app_subversion = 4;
 
 char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
 char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
@@ -96,7 +97,7 @@ volatile int g_terminate = 0;
  */
 void set_restart(int rs) {
    if(g_terminate) {
-      logging("Cannt set restart - process will terminate\n");
+      logging("Cannt set restart - process will terminate");
       return;
    }
    g_restart = rs;
@@ -397,6 +398,7 @@ static void usage() {
    fprintf(stderr, "Options:\n");
    fprintf(stderr, " -h              display this help\n");
    fprintf(stderr, " -l logfd        set fd which is used for logging\n");
+   fprintf(stderr, " -n name         set the name of the process\n");
    fprintf(stderr, " -p pidfile      specify a pidfile\n");
    fprintf(stderr, " -s sleep_time   time to wait before a restart\n");
    exit(1);
@@ -433,15 +435,19 @@ int main(int argc, char * argv[]) {
    int logfd = -1;
    int sleep_timer = 0;
    char * pid_file = NULL;
+   char * proc_name = NULL;
 
    int opt;
-   while ((opt = getopt(argc, argv, "hl:p:s:-")) != -1) {
+   while ((opt = getopt(argc, argv, "hl:n:p:s:-")) != -1) {
       switch (opt) {
       case 'h':
          usage();
       case 'l':
          logfd = atoi(optarg);
          log_fd_set(logfd);
+         break;
+      case 'n':
+         proc_name = optarg;
          break;
       case 'p':
          pid_file = optarg;
@@ -468,6 +474,14 @@ int main(int argc, char * argv[]) {
 
    if(pid_file!=NULL) {
       write_pid_file(pid_file);
+   }
+
+   if(proc_name!=NULL) {
+      logging("Setting process name to [%s]", proc_name);
+      int const rp = prctl(PR_SET_NAME, (unsigned long) proc_name, 0, 0, 0);
+      if(rp==-1) {
+         logging("Setting of process name failed [%s]", strerror(errno));
+      }
    }
 
    install_signal_handler();
