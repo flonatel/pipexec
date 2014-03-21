@@ -97,7 +97,7 @@ volatile int g_terminate = 0;
  */
 void set_restart(int rs) {
    if(g_terminate) {
-      logging("Cannot set restart - process will terminate");
+      logging("Cannot set restart flag - process will terminate");
       return;
    }
    g_restart = rs;
@@ -536,6 +536,12 @@ int main(int argc, char * argv[]) {
 
             if(! WIFEXITED(status)) {
                logging("Unnormal termination of child - restarting");
+               set_restart(1);
+               child_pids_kill_all();
+            }
+
+            if(WIFSIGNALED(status)) {
+               logging("Child was signaled - restarting");
                set_restart(1);
                child_pids_kill_all();
             }
