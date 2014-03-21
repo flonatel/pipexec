@@ -4,5 +4,5 @@ pipexec: pipexec.c
 
 .PHONY: clean
 clean:
-	rm -f pipexec
+	rm -f pipexec core
 
