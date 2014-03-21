@@ -15,7 +15,7 @@
 #include <time.h>
 
 int const app_version = 1;
-int const app_subversion = 4;
+int const app_subversion = 5;
 
 char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
 char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
@@ -40,7 +40,7 @@ unsigned long log_fd_write_time(char * buf, unsigned long free_bytes) {
 }
 
 unsigned long log_fd_write_pname_and_pid(char * buf, unsigned long free_bytes) {
-   return snprintf(buf, free_bytes, ";pexec;%d;", getpid());
+   return snprintf(buf, free_bytes, ";pipexec;%d;", getpid());
 }
 
 unsigned long log_fd_write_args(char * buf, unsigned long free_bytes,
@@ -97,7 +97,7 @@ volatile int g_terminate = 0;
  */
 void set_restart(int rs) {
    if(g_terminate) {
-      logging("Cannt set restart - process will terminate");
+      logging("Cannot set restart - process will terminate");
       return;
    }
    g_restart = rs;
