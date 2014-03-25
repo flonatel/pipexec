@@ -105,7 +105,7 @@ void set_restart(int rs) {
 
 /**
  * If an appropriate signal was sent to this process,
- * it will terminate - indeptendent of the results the clients return
+ * it will terminate - indeptendent of the results the childs return
  * during their shutdown.
  */
 void set_terminate() {
@@ -115,7 +115,7 @@ void set_terminate() {
 
 
 /**
- * An array with the pids of all client processes.
+ * An array with the pids of all child processes.
  * If a child is not running (e.g. during cleanup or restart phase)
  * the appropriate entry it set to 0.
  */
@@ -572,7 +572,7 @@ int main(int argc, char * argv[]) {
             }
          }
 
-         logging("Finished waiting for clients");
+         logging("Killed all children - list should be empty:");
          child_pids_print();
 
          if( g_restart && sleep_timer!=0 ) {
