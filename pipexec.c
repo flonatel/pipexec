@@ -15,7 +15,7 @@
 #include <time.h>
 
 int const app_version = 1;
-int const app_subversion = 5;
+int const app_subversion = 6;
 
 char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
 char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
@@ -152,6 +152,8 @@ void child_pids_print() {
    logging(pbuf);
 }
 
+
+
 void child_pids_kill_all() {
    for(unsigned int child_idx=0; child_idx<g_child_cnt; ++child_idx) {
       if(g_child_pids[child_idx]!=0) {
@@ -160,6 +162,35 @@ void child_pids_kill_all() {
          kill(to_kill, SIGTERM);
       }
    }
+}
+
+void child_pids_wait_all() {
+   for(unsigned int child_idx=0; child_idx<g_child_cnt; ++child_idx) {
+      if(g_child_pids[child_idx]!=0) {
+         pid_t const to_wait = g_child_pids[child_idx];
+         logging("Wait for pid [%d] to terminate", to_wait);
+         int status;
+         pid_t const rw = waitpid(to_wait, &status, 0);
+         if(rw==-1) {
+            logging("Error waiting for [%d] [%s]",
+                    to_wait, strerror(errno));
+         } else {
+            logging("Child [%d] exit with status [%d] "
+                    "normal exit [%d] child status [%d] "
+                    "child signaled [%d]",
+                    to_wait, status, WIFEXITED(status),
+                    WEXITSTATUS(status), WIFSIGNALED(status));
+         }
+         child_pids_unset(to_wait);
+      }
+   }
+   logging("Finished waiting for all children");
+}
+
+
+void child_pids_kill_all_and_wait() {
+   child_pids_kill_all();
+   child_pids_wait_all();
 }
 
 /**
@@ -174,7 +205,7 @@ void sh_term(int signum, siginfo_t * siginfo,
 
    // Kill all children and stop
    set_terminate();
-   child_pids_kill_all();
+   child_pids_kill_all_and_wait();
 }
 
 void sh_restart(int signum, siginfo_t * siginfo, void * ucontext) {
@@ -184,7 +215,7 @@ void sh_restart(int signum, siginfo_t * siginfo, void * ucontext) {
 
    // Kill all children and restart
    set_restart(1);
-   child_pids_kill_all();
+   child_pids_kill_all_and_wait();
 }
 
 void install_signal_handler() {
@@ -534,16 +565,10 @@ int main(int argc, char * argv[]) {
                     WEXITSTATUS(status), WIFSIGNALED(status));
             child_pids_unset(cpid);
 
-            if(! WIFEXITED(status)) {
-               logging("Unnormal termination of child - restarting");
+            if(! WIFEXITED(status) || WIFSIGNALED(status)) {
+               logging("Unnormal termination/signaling of child - restarting");
                set_restart(1);
-               child_pids_kill_all();
-            }
-
-            if(WIFSIGNALED(status)) {
-               logging("Child was signaled - restarting");
-               set_restart(1);
-               child_pids_kill_all();
+               child_pids_kill_all_and_wait();
             }
          }
 
