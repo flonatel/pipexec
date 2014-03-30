@@ -124,6 +124,9 @@ void set_terminate() {
  * An array with the pids of all child processes.
  * If a child is not running (e.g. during cleanup or restart phase)
  * the appropriate entry it set to 0.
+ *
+ * This needs to be global, because it is also accessed from the
+ * interrupt handler.
  */
 volatile unsigned int g_child_cnt = 0;
 volatile pid_t * g_child_pids = NULL;
@@ -294,7 +297,6 @@ void command_info_array_print(
    }
 }
 
-
 static void command_info_constrcutor(
    command_info_t * self,
    char ** argv) {
@@ -307,9 +309,90 @@ static void command_info_print(
    logging("command_info path [%s]", self->argv[0]);
 }
 
+/*
+ * Pipe information
+ *
+ * This contains the source (name and fd) and the destination
+ * (also name and fd).
+ */
+enum pipe_connect { pc_directed, pc_assign };
+
+struct pipe_info {
+   char *      from_name;
+   int         from_fd;
+
+   enum pipe_connect connect;
+
+   char *      to_name;
+   int         to_fd;
+
+   int         pipefds[2];
+};
+
+typedef struct pipe_info pipe_info_t;
+
+void pipe_info_print(pipe_info_t * ipipe, unsigned long cnt) {
+   for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
+      printf("PIPE [%2d] [%s] [%d] -[%d]- [%s] [%d]\n", pidx,
+             ipipe[pidx].from_name, ipipe[pidx].from_fd,
+             ipipe[pidx].connect,
+             ipipe[pidx].to_name, ipipe[pidx].to_fd);
+   }
+}
+
+void pipe_info_parse(pipe_info_t * ipipe,
+                     int start_argc, int argc, char * argv[]) {
+   unsigned int pipe_no = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i]==NULL) {
+         continue;
+      }
+
+      if(argv[i][0]=='{') {
+         char * colon = strchr(&argv[i][1], ':');
+         if(colon==NULL) {
+            logging("Invalid syntax: no colon in pipe desc found");
+            exit(1);
+         }
+         *colon = '\0';
+         ipipe[pipe_no].from_name = &argv[i][1];
+         char * end_fd;
+         ipipe[pipe_no].from_fd = strtol(colon+1, &end_fd, 10);
+
+         // connect symbol
+         if(*end_fd=='>') {
+            ipipe[pipe_no].connect = pc_directed;
+         } else if(*end_fd=='=') {
+            ipipe[pipe_no].connect = pc_assign;
+         } else {
+            logging("Invalid syntax: no colon or = in pipe desc found");
+            exit(1);
+         }
+
+         // ToDo: Copy from above
+         char * colon2 = strchr(end_fd, ':');
+         if(colon2==NULL) {
+            logging("Invalid syntax: no colon in pipe desc 2 found");
+            exit(1);
+         }
+         *colon2 = '\0';
+         ipipe[pipe_no].to_name = end_fd+1;
+         ipipe[pipe_no].to_fd = strtol(colon2+1, &end_fd, 10);
+
+         ++pipe_no;
+      }
+   }
+}
+
+// Functions using the upper data structures
 static void pipe_execv_one(
    command_info_t const * params,
-   int child_stdin_fd, int child_stdout_fd, int next_child_stdin_fd) {
+   pipe_info_t * const ipipe, size_t const pipe_cnt) {
+
+   
+   // TODO: run through the ipipe and dup2() in the correct
+   //       fds. Close the rest.
+   
 
    logging("pipe_execv_one child_fds [%d] [%d] [%d]",
            child_stdin_fd, child_stdout_fd, next_child_stdin_fd);
@@ -340,7 +423,7 @@ static void pipe_execv_one(
 
 static pid_t pipe_execv_fork_one(
    command_info_t const * params,
-   int child_stdin_fd, int child_stdout_fd, int next_child_stdin_fd) {
+   pipe_info_t * const ipipe, size_t const pipe_cnt) {
 
    command_info_print(params);
    pid_t const fpid = fork();
@@ -350,8 +433,7 @@ static pid_t pipe_execv_fork_one(
       exit(10);
    } else if(fpid==0) {
       uninstall_signal_handler();
-      pipe_execv_one(params, child_stdin_fd, child_stdout_fd,
-                     next_child_stdin_fd);
+      pipe_execv_one(params, ipipe, pipe_cnt);
       // Neverreached
       abort();
    }
@@ -361,70 +443,33 @@ static pid_t pipe_execv_fork_one(
    return fpid;
 }
 
-int pipe_execv(size_t const param_cnt, command_info_t * const params,
+int pipe_execv(command_info_t * const icmd, size_t const cmd_cnt,
+               pipe_info_t * const ipipe, size_t const pipe_cnt,
                pid_t * child_pids) {
+
+   // Open up all the pipes.
+   for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
+      int const pres = pipe(ipipe[pidx].pipefds);
+      if(pres==-1) {
+         perror("pipe");
+         exit(10);
+      }
+   }
+
+   // TODO: dup2 of '=' IN and OUTs
 
    // Looks that messing around with the pipes (storing them and propagating
    // them to all children) is not a good idea.
-   // There is a need for three pipe fds, because pipe fds can only be
-   // created in pairs.
-   // o stdin of the child
-   // o the new pipe-pair for stdout and the next processes stdin.
-   int child_stdin_fd = -1;
-   int child_stdout_fd = -1;
-   int next_child_stdin_fd = -1;
-
-   for(size_t param_idx=0; param_idx<param_cnt; ++param_idx) {
-
-      int const is_cmd_following  = (param_idx<param_cnt-1);
-
-      if(is_cmd_following) {
-         int npipefds[2];
-         int const pres = pipe(npipefds);
-         if(pres==-1) {
-            perror("pipe");
-            exit(10);
-         }
-
-         child_stdout_fd = npipefds[1];
-         next_child_stdin_fd = npipefds[0];
-      }
-
-      child_pids[param_idx] =
-         pipe_execv_fork_one(
-            &params[param_idx],
-            child_stdin_fd, child_stdout_fd, next_child_stdin_fd);
-
-      // Advance the pipe fds
-      if(child_stdin_fd!=-1) { close(child_stdin_fd); child_stdin_fd = -1; }
-      if(child_stdout_fd!=-1) { close(child_stdout_fd); child_stdout_fd = -1; }
-      child_stdin_fd = next_child_stdin_fd;
-      next_child_stdin_fd = -1;
+   // ... but in this case there is no other way....
+   for(size_t cidx=0; cidx<command_cnt; ++cidx) {
+      child_pids[param_idx]
+         = pipe_execv_fork_one(
+            &params[param_idx], ipipe, pipe_cnt);
    }
+
+   // ToDo: Delete all the PIPES except INs and OUTs
 
    return 0;
-}
-
-/**
- * Replaces the pipe symbol with NULL.
- * returns the number of replaces pipe symbols.
- */
-static unsigned int replace_pipe_symbol_with_null(
-   int start_argc, int argc, char * argv[]) {
-   logging("Parsing command");
-
-   unsigned int pipe_symbol_cnt = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      logging("Arg pos [%3d]: [%s]", i, argv[i]);
-
-      if(strlen(argv[i])==1 && argv[i][0]=='|') {
-         argv[i]=NULL;
-         ++pipe_symbol_cnt;
-         logging("Pipe symbol found at pos [%d]", i);
-      }
-   }
-   logging("Found [%d] pipe symbols", pipe_symbol_cnt);
-   return pipe_symbol_cnt;
 }
 
 /**
@@ -448,7 +493,6 @@ unsigned int next_running_child() {
    }
    return g_child_cnt;
 }
-
 
 static void usage() {
    fprintf(stderr, "pipexec version %d.%d\n", app_version, app_subversion);
@@ -491,8 +535,6 @@ static void remove_pid_file(char const * const pid_file) {
    }
 }
 
-
-// NEW
 static unsigned int clp_count_enteties(
    char entc, int start_argc, int argc, char * argv[]) {
    unsigned int cnt = 0;
@@ -514,78 +556,6 @@ static unsigned int clp_count_pipes(
    return clp_count_enteties('{', start_argc, argc, argv);
 }
 
-
-// Pipe specific
-
-enum pipe_connect { pc_directed, pc_assign };
-
-struct pipe_info {
-   char *      from_name;
-   int         from_fd;
-
-   enum pipe_connect connect;
-
-   char *      to_name;
-   int         to_fd;
-
-   int         pipefds[2];
-};
-
-void pipe_info_print(
-   struct pipe_info * ipipe,
-   unsigned long cnt) {
-   for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
-      printf("PIPE [%2d] [%s] [%d] -[%d]- [%s] [%d]\n", pidx,
-             ipipe[pidx].from_name, ipipe[pidx].from_fd,
-             ipipe[pidx].connect,
-             ipipe[pidx].to_name, ipipe[pidx].to_fd);
-   }
-}
-
-void pipe_info_parse(
-   struct pipe_info * ipipe,
-   int start_argc, int argc, char * argv[]) {
-   unsigned int pipe_no = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i]==NULL) {
-         continue;
-      }
-
-      if(argv[i][0]=='{') {
-         char * colon = strchr(&argv[i][1], ':');
-         if(colon==NULL) {
-            logging("Invalid syntax: no colon in pipe desc found");
-            exit(1);
-         }
-         *colon = '\0';
-         ipipe[pipe_no].from_name = &argv[i][1];
-         char * end_fd;
-         ipipe[pipe_no].from_fd = strtol(colon+1, &end_fd, 10);
-
-         // connect symbol
-         if(*end_fd=='>') {
-            ipipe[pipe_no].connect = pc_directed;
-         } else if(*end_fd=='=') {
-            ipipe[pipe_no].connect = pc_assign;
-         } else {
-            logging("Invalid syntax: no colon or = in pipe desc found");
-            exit(1);
-         }
-
-         // ToDo: Copy from above
-         char * colon2 = strchr(end_fd, ':');
-         if(colon2==NULL) {
-            logging("Invalid syntax: no colon in pipe desc 2 found");
-            exit(1);
-         }
-         *colon2 = '\0';
-         ipipe[pipe_no].to_name = end_fd+1;
-         ipipe[pipe_no].to_fd = strtol(colon2+1, &end_fd, 10);
-
-         ++pipe_no;
-      }
-   }
-}
 
 
 
@@ -661,20 +631,7 @@ int main(int argc, char * argv[]) {
    pipe_info_parse(ipipe, optind, argc, argv);
    pipe_info_print(ipipe, pipe_cnt);
 
-#if 0
-   unsigned int const pipe_symbol_cnt
-      = replace_pipe_symbol_with_null(optind, argc, argv);
-   unsigned int const command_cnt = pipe_symbol_cnt + 1;
-
-   command_info_t params[command_cnt];
-   unsigned int params_idx = 0;
-   int arg_idx = optind;
-
-   do {
-      command_info_constrcutor(
-         &params[params_idx++], &argv[arg_idx]);
-   } while ( (arg_idx = find_next_cmd(argc, argv, arg_idx)) != argc );
-
+   // Provide memory for child_pids and initialize.
    pid_t child_pids[command_cnt];
    for(unsigned int i=0; i<command_cnt; ++i) {
       child_pids[i]=0;
@@ -686,7 +643,8 @@ int main(int argc, char * argv[]) {
       if( next_running_child()==command_cnt ) {
          set_restart(0);
          logging("Start all [%d] children", command_cnt);
-         pipe_execv(command_cnt, params, child_pids);
+         pipe_execv(icmd, command_cnt,
+                    ipipe, pipe_cnt, child_pids);
       }
 
       logging("Wait for termination of children");
@@ -731,8 +689,6 @@ int main(int argc, char * argv[]) {
    if(pid_file!=NULL) {
       remove_pid_file(pid_file);
    }
-
-#endif
 
    logging("exiting");
 
