@@ -7,6 +7,11 @@ Handling pipe of commands like a single command
 Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org/flonatel/pipexec)
 
 # Introduction
+If you want to communicate not only with one filedescriptor in one
+direction - like <code>cmd1 | cmd2 | cmd3</code> - but also need more
+sophisticated ways like connecting fd 7 of <code>cmd3</code> to fd 6
+of <code>cmd1</code> you are lost when using normal shells.
+
 Most systems to start and run processes during system start-up time do
 not support pipe.  If you need to run a pipe of programs from an
 /etc/init.d script you are mostly lost.
@@ -24,6 +29,9 @@ commands.  When *pipexec* receives a SIGTERM, SIGQUIT or SIGINT it
 stops the whole pipe and itself. When *pipexec* received a SIGHUP the
 pipe of commands is restarted. When one command in the pipe exits with
 a signal, the pipe of commands is restarted.
+
+With *pipexec* it is possible to build up a hole graph of commands
+connected by arbitrary pipes as edges.
 
 # Usage
     $ ./pipexec -h
@@ -66,5 +74,8 @@ Or
     $ head -2 /tmp/pipexec.log
     2014-03-16 19:57:31;pexec;10762;pipexec version 1.0
     2014-03-16 19:57:31;pexec;10762;(c) 2014 by flonatel GmbH & Co, KG
+
+
+    $ pipexec -- [ a: cmd1 arg ] [ b: cmd2 arg arg ] [ c: cmd3 ] {a:1>b:4} {b:2>c:0} {c:1>a:0} {c:5>b:1} {a:2>c:12}
 
 
