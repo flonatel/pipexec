@@ -495,7 +495,7 @@ struct command_info {
    char **     argv;
 };
 
-void parse_commands(
+void command_info_parse(
    struct command_info * icmd,
    int start_argc, int argc, char * argv[]) {
    unsigned int cmd_no = 0;
@@ -503,23 +503,92 @@ void parse_commands(
       if(argv[i][0]=='[') {
          icmd[cmd_no].name = &argv[i][1];
          icmd[cmd_no].argv = &argv[i+1];
+         ++cmd_no;
       } else if(argv[i][0]==']') {
          argv[i] = NULL;
       }
    }
 }
 
+void command_info_print(
+   struct command_info * icmd,
+   unsigned long cnt) {
+   for(unsigned int cidx = 0; cidx < cnt; ++cidx) {
+      printf("CMD [%2d] [%s] [%s]\n", cidx, icmd[cidx].name, icmd[cidx].argv[0]);
+   }
+}
+
+enum pipe_connect { pc_directed, pc_assign };
+
 struct pipe_info {
    char *      from_name;
-   char *      from_fds;
    int         from_fd;
 
+   enum pipe_connect connect;
+
    char *      to_name;
-   char *      to_fds;
    int         to_fd;
 
    int         pipefds[2];
 };
+
+void pipe_info_print(
+   struct pipe_info * ipipe,
+   unsigned long cnt) {
+   for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
+      printf("PIPE [%2d] [%s] [%d] -[%d]- [%s] [%d]\n", pidx,
+             ipipe[pidx].from_name, ipipe[pidx].from_fd,
+             ipipe[pidx].connect,
+             ipipe[pidx].to_name, ipipe[pidx].to_fd);
+   }
+}
+
+void pipe_info_parse(
+   struct pipe_info * ipipe,
+   int start_argc, int argc, char * argv[]) {
+   unsigned int pipe_no = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i]==NULL) {
+         continue;
+      }
+
+      if(argv[i][0]=='{') {
+         char * colon = strchr(&argv[i][1], ':');
+         if(colon==NULL) {
+            logging("Invalid syntax: no colon in pipe desc found");
+            exit(1);
+         }
+         *colon = '\0';
+         ipipe[pipe_no].from_name = &argv[i][1];
+         char * end_fd;
+         ipipe[pipe_no].from_fd = strtol(colon+1, &end_fd, 10);
+
+         // connect symbol
+         if(*end_fd=='>') {
+            ipipe[pipe_no].connect = pc_directed;
+         } else if(*end_fd=='=') {
+            ipipe[pipe_no].connect = pc_assign;
+         } else {
+            logging("Invalid syntax: no colon or = in pipe desc found");
+            exit(1);
+         }
+
+         // ToDo: Copy from above
+         char * colon2 = strchr(end_fd, ':');
+         if(colon2==NULL) {
+            logging("Invalid syntax: no colon in pipe desc 2 found");
+            exit(1);
+         }
+         *colon2 = '\0';
+         ipipe[pipe_no].to_name = end_fd+1;
+         ipipe[pipe_no].to_fd = strtol(colon2+1, &end_fd, 10);
+
+         ++pipe_no;
+      }
+   }
+}
+
+
 
 int main(int argc, char * argv[]) {
 
@@ -586,9 +655,12 @@ int main(int argc, char * argv[]) {
    printf("Pipes    [%d]\n", pipe_cnt);
 
    struct command_info icmd[command_cnt];
-   parse_commands(icmd, optind, argc, argv);
+   command_info_parse(icmd, optind, argc, argv);
+   command_info_print(icmd, command_cnt);
 
    struct pipe_info    ipipe[pipe_cnt];
+   pipe_info_parse(ipipe, optind, argc, argv);
+   pipe_info_print(ipipe, pipe_cnt);
 
 #if 0
    unsigned int const pipe_symbol_cnt
