@@ -158,8 +158,6 @@ void child_pids_print() {
    logging(pbuf);
 }
 
-
-
 void child_pids_kill_all() {
    for(unsigned int child_idx=0; child_idx<g_child_cnt; ++child_idx) {
       if(g_child_pids[child_idx]!=0) {
@@ -192,7 +190,6 @@ void child_pids_wait_all() {
    }
    logging("Finished waiting for all children");
 }
-
 
 void child_pids_kill_all_and_wait() {
    child_pids_kill_all();
@@ -260,31 +257,58 @@ void uninstall_signal_handler() {
  * Please note that here are only stored pointers -
  * typically to a memory of argv.
  */
-struct pipe_execv_params {
+struct command_info {
+   char * cmd_name;
    char * path;
    char ** argv;
 };
 
-typedef struct pipe_execv_params pipe_execv_params_t;
+typedef struct command_info command_info_t;
 
 /**
  * Placement constructor:
  * pass in a unititialized memory region.
  */
-void pipe_execv_params_constrcutor(
-   pipe_execv_params_t * self,
+static void command_info_array_constrcutor(
+   command_info_t * icmd,
+   int start_argc, int argc, char * argv[]) {
+   unsigned int cmd_no = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i][0]=='[') {
+         icmd[cmd_no].cmd_name = &argv[i][1];
+         icmd[cmd_no].path = argv[i+1];
+         icmd[cmd_no].argv = &argv[i+1];
+         ++cmd_no;
+      } else if(argv[i][0]==']') {
+         argv[i] = NULL;
+      }
+   }
+}
+
+void command_info_array_print(
+   command_info_t * icmd,
+   unsigned long cnt) {
+   for(unsigned int cidx = 0; cidx < cnt; ++cidx) {
+      printf("CMD [%2d] [%s] [%s]\n",
+             cidx, icmd[cidx].cmd_name, icmd[cidx].path);
+   }
+}
+
+
+static void command_info_constrcutor(
+   command_info_t * self,
    char ** argv) {
    self->path = *argv;
    self->argv = argv;
 }
 
-void pipe_execv_params_print(
-   pipe_execv_params_t const * const self) {
-   logging("pipe_execv_params path [%s]", self->argv[0]);
+static void command_info_print(
+   command_info_t const * const self) {
+   logging("command_info path [%s]", self->argv[0]);
 }
 
 static void pipe_execv_one(
-   pipe_execv_params_t const * params,
+   command_info_t const * params,
    int child_stdin_fd, int child_stdout_fd, int next_child_stdin_fd) {
 
    logging("pipe_execv_one child_fds [%d] [%d] [%d]",
@@ -315,10 +339,10 @@ static void pipe_execv_one(
 }
 
 static pid_t pipe_execv_fork_one(
-   pipe_execv_params_t const * params,
+   command_info_t const * params,
    int child_stdin_fd, int child_stdout_fd, int next_child_stdin_fd) {
 
-   pipe_execv_params_print(params);
+   command_info_print(params);
    pid_t const fpid = fork();
 
    if(fpid==-1) {
@@ -337,7 +361,7 @@ static pid_t pipe_execv_fork_one(
    return fpid;
 }
 
-int pipe_execv(size_t const param_cnt, pipe_execv_params_t * const params,
+int pipe_execv(size_t const param_cnt, command_info_t * const params,
                pid_t * child_pids) {
 
    // Looks that messing around with the pipes (storing them and propagating
@@ -490,33 +514,8 @@ static unsigned int clp_count_pipes(
    return clp_count_enteties('{', start_argc, argc, argv);
 }
 
-struct command_info {
-   char *      name;
-   char **     argv;
-};
 
-void command_info_parse(
-   struct command_info * icmd,
-   int start_argc, int argc, char * argv[]) {
-   unsigned int cmd_no = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i][0]=='[') {
-         icmd[cmd_no].name = &argv[i][1];
-         icmd[cmd_no].argv = &argv[i+1];
-         ++cmd_no;
-      } else if(argv[i][0]==']') {
-         argv[i] = NULL;
-      }
-   }
-}
-
-void command_info_print(
-   struct command_info * icmd,
-   unsigned long cnt) {
-   for(unsigned int cidx = 0; cidx < cnt; ++cidx) {
-      printf("CMD [%2d] [%s] [%s]\n", cidx, icmd[cidx].name, icmd[cidx].argv[0]);
-   }
-}
+// Pipe specific
 
 enum pipe_connect { pc_directed, pc_assign };
 
@@ -654,9 +653,9 @@ int main(int argc, char * argv[]) {
    printf("Commands [%d]\n", command_cnt);
    printf("Pipes    [%d]\n", pipe_cnt);
 
-   struct command_info icmd[command_cnt];
-   command_info_parse(icmd, optind, argc, argv);
-   command_info_print(icmd, command_cnt);
+   command_info_t icmd[command_cnt];
+   command_info_array_constrcutor(icmd, optind, argc, argv);
+   command_info_array_print(icmd, command_cnt);
 
    struct pipe_info    ipipe[pipe_cnt];
    pipe_info_parse(ipipe, optind, argc, argv);
@@ -667,12 +666,12 @@ int main(int argc, char * argv[]) {
       = replace_pipe_symbol_with_null(optind, argc, argv);
    unsigned int const command_cnt = pipe_symbol_cnt + 1;
 
-   pipe_execv_params_t params[command_cnt];
+   command_info_t params[command_cnt];
    unsigned int params_idx = 0;
    int arg_idx = optind;
 
    do {
-      pipe_execv_params_constrcutor(
+      command_info_constrcutor(
          &params[params_idx++], &argv[arg_idx]);
    } while ( (arg_idx = find_next_cmd(argc, argv, arg_idx)) != argc );
 
