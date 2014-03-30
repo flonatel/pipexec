@@ -78,6 +78,6 @@ Or
 
 Or using arbitrary graph pipe connects:
 
-    $ pipexec -- [a:cmd1 arg] [b:cmd2 arg arg] [c:cmd3] {IN:0=a:0} {a:1>b:4} {b:2>c:0} {c:1>a:0} {c:5>b:1} {a:2>c:12} {c:4=OUT:2}
+    $ pipexec -- [A cmd1 arg ] [B cmd2 arg arg ] [C cmd3 ] "{IN:0=A:0}" "{A:1>B:4}" "{B:2>C:0}" "{C:1>A:0}" "{C:5>B:1}" "{A:2>C:12}" "{C:4=OUT:2}"
 
 
