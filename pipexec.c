@@ -1,3 +1,9 @@
+/*
+ * pipexec
+ *
+ * Build up a directed graph of processes and pipes.
+ *
+ */
 #define _POSIX_C_SOURCE 200809L
 
 #include <sys/types.h>
@@ -461,6 +467,60 @@ static void remove_pid_file(char const * const pid_file) {
    }
 }
 
+
+// NEW
+static unsigned int clp_count_enteties(
+   char entc, int start_argc, int argc, char * argv[]) {
+   unsigned int cnt = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i][0]==entc) {
+         ++cnt;
+      }
+   }
+   return cnt;
+}
+
+static unsigned int clp_count_commands(
+   int start_argc, int argc, char * argv[]) {
+   return clp_count_enteties('[', start_argc, argc, argv);
+}
+
+static unsigned int clp_count_pipes(
+   int start_argc, int argc, char * argv[]) {
+   return clp_count_enteties('{', start_argc, argc, argv);
+}
+
+struct command_info {
+   char *      name;
+   char **     argv;
+};
+
+void parse_commands(
+   struct command_info * icmd,
+   int start_argc, int argc, char * argv[]) {
+   unsigned int cmd_no = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i][0]=='[') {
+         icmd[cmd_no].name = &argv[i][1];
+         icmd[cmd_no].argv = &argv[i+1];
+      } else if(argv[i][0]==']') {
+         argv[i] = NULL;
+      }
+   }
+}
+
+struct pipe_info {
+   char *      from_name;
+   char *      from_fds;
+   int         from_fd;
+
+   char *      to_name;
+   char *      to_fds;
+   int         to_fd;
+
+   int         pipefds[2];
+};
+
 int main(int argc, char * argv[]) {
 
    int logfd = -1;
@@ -517,6 +577,20 @@ int main(int argc, char * argv[]) {
 
    install_signal_handler();
 
+   unsigned int const command_cnt
+      = clp_count_commands(optind, argc, argv);
+   unsigned int const pipe_cnt
+      = clp_count_pipes(optind, argc, argv);
+
+   printf("Commands [%d]\n", command_cnt);
+   printf("Pipes    [%d]\n", pipe_cnt);
+
+   struct command_info icmd[command_cnt];
+   parse_commands(icmd, optind, argc, argv);
+
+   struct pipe_info    ipipe[pipe_cnt];
+
+#if 0
    unsigned int const pipe_symbol_cnt
       = replace_pipe_symbol_with_null(optind, argc, argv);
    unsigned int const command_cnt = pipe_symbol_cnt + 1;
@@ -586,6 +660,8 @@ int main(int argc, char * argv[]) {
    if(pid_file!=NULL) {
       remove_pid_file(pid_file);
    }
+
+#endif
 
    logging("exiting");
 
