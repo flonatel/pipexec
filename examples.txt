@@ -1,5 +1,8 @@
 ./pipexec -l 2 -- [A /bin/ls -l ] [B /bin/grep LIC ] "{A:1>B:0}" "{PARENT:0=A:0}" "{PARENT:1=B:1}" "{PARENT:2=B:2}"
 
+./pipexec -l 2 -- [A /bin/echo Hallo ] [B /bin/echo Bye ] [WC /usr/bin/wc ] "{A:1>WC:0}" "{B:1>WC:0}" "{PARENT:0=A:0}" "{PARENT:1=WC:1}" "{PARENT:2=WC:2}"
+
+
 ./pipexec -l 2 -- [A cmd1 arg] [B cmd2 arg arg] [C cmd3] "{IN:0=A:0}" "{A:1>B:4}" "{B:4>C:0}" "{C:1>A:0}" "{C:5>B:1}" "{A:7>C:12}" "{C:4=OUT:1}"
 
 
