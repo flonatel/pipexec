@@ -333,7 +333,7 @@ typedef struct pipe_info pipe_info_t;
 
 void pipe_info_print(pipe_info_t * ipipe, unsigned long cnt) {
    for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
-      logging("Pipe [%2d] [%s] [%d] -[%d]- [%s] [%d]", pidx,
+      logging("{%d} Pipe [%s] [%d] -[%d]- [%s] [%d]", pidx,
               ipipe[pidx].from_name, ipipe[pidx].from_fd,
               ipipe[pidx].connect,
               ipipe[pidx].to_name, ipipe[pidx].to_fd);
@@ -384,10 +384,19 @@ void pipe_info_parse(pipe_info_t * ipipe,
    }
 }
 
+// Dup2 a fd
+static void block_fd(int to_block, int blocking_fd) {
+   logging("Blocking fd [%d] with copy of [%d]", to_block, blocking_fd);
+   int const bfd=dup2(blocking_fd, to_block);
+   if(bfd!=to_block) {
+      abort();
+   }
+}
+
 // Block all FDs for really used pipes:
 // o open an additional unused pipe
 // o dup2() one fd of this unused pipe for all later on used fds.
-void pipe_info_block_used_fds(pipe_info_t * ipipe, unsigned long cnt) {
+static void pipe_info_block_used_fds(pipe_info_t * ipipe, unsigned long cnt) {
    logging("Blocking used fds");
 
    logging("Creating extra pipe for blocking fds");
@@ -397,12 +406,59 @@ void pipe_info_block_used_fds(pipe_info_t * ipipe, unsigned long cnt) {
       perror("pipe");
       exit(10);
    }
-   logging("Fds for blocking [%d] [%d]", block_pipefds[0],
-           block_pipefds[1]);
+   // One is enough:
+   close(block_pipefds[1]);
+   logging("Fd for blocking [%d]", block_pipefds[0]);
 
    for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
+      if(ipipe[pidx].from_fd>2
+         && ipipe[pidx].from_fd!=block_pipefds[0]) {
+         block_fd(ipipe[pidx].from_fd, block_pipefds[0]);
+      }
+      if(ipipe[pidx].to_fd>2
+         && ipipe[pidx].to_fd!=block_pipefds[0]) {
+         block_fd(ipipe[pidx].to_fd, block_pipefds[0]);
+      }
    }
-   abort();
+}
+
+static void pipe_info_create_pipes(
+   pipe_info_t * ipipe, unsigned long pipe_cnt) {
+   // Open up all the pipes.
+   for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
+      int const pres = pipe(ipipe[pidx].pipefds);
+      if(pres==-1) {
+         perror("pipe");
+         exit(10);
+      }
+      logging("{%d} Pipe created [%d] -> [%d]", pidx, ipipe[pidx].pipefds[1],
+              ipipe[pidx].pipefds[0]);
+   }
+}
+
+// ToDo: check result of close.
+static void pipe_info_dup_in_pipes(char * cmd_name,
+   pipe_info_t * ipipe, unsigned long pipe_cnt) {
+   for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
+      if(strcmp(cmd_name, ipipe[pidx].from_name)==0) {
+         logging("{%d} [%s] Dup fd [%s] [%d] -> [%d]", pidx, cmd_name,
+                 ipipe[pidx].from_name, ipipe[pidx].pipefds[1],
+                 ipipe[pidx].from_fd);
+         close(ipipe[pidx].from_fd);
+         int const bfd=dup2(ipipe[pidx].pipefds[1], ipipe[pidx].from_fd);
+         if(bfd!=ipipe[pidx].from_fd) {
+            logging("{%d} ERROR: dup2() [%d] -> [%d] failed [%s]", pidx,
+                    ipipe[pidx].pipefds[1], ipipe[pidx].from_fd,
+                    strerror(errno));
+            sleep(1);
+            abort();
+         }
+      } else {
+         logging("{%d} [%s] Closing [%s] [%d]", pidx, cmd_name,
+                 ipipe[pidx].from_name, ipipe[pidx].pipefds[1]);
+         close(ipipe[pidx].pipefds[1]);
+      }
+   }
 }
 
 // Functions using the upper data structures
@@ -410,38 +466,15 @@ static void pipe_execv_one(
    command_info_t const * params,
    pipe_info_t * const ipipe, size_t const pipe_cnt) {
 
+   pipe_info_dup_in_pipes(params->cmd_name, ipipe, pipe_cnt);
+
    
    // TODO: run through the ipipe and dup2() in the correct
    //       fds. Close the rest.
    
 
-   abort();
-
-#if 0
-   logging("pipe_execv_one child_fds [%d] [%d] [%d]",
-           child_stdin_fd, child_stdout_fd, next_child_stdin_fd);
-
-   if(child_stdin_fd!=-1) {
-      close(STDIN_FILENO);
-      int const nstdin=dup2(child_stdin_fd, STDIN_FILENO);
-      if(nstdin!=STDIN_FILENO) {
-         abort();
-      }
-   }
-
-   if(child_stdout_fd!=-1) {
-      close(STDOUT_FILENO);
-      int const nstdout=dup2(child_stdout_fd, STDOUT_FILENO);
-      if(nstdout!=STDOUT_FILENO) {
-         abort();
-      }
-   }
-
-   if(next_child_stdin_fd!=-1) close(next_child_stdin_fd);
-
+   logging("[%s] Calling execv [%s]", params->cmd_name, params->path);
    execv(params->path, params->argv);
-#endif
-
    perror("execv");
    abort();
 }
@@ -463,7 +496,7 @@ static pid_t pipe_execv_fork_one(
       abort();
    }
 
-   logging("New child pid [%d]", fpid);
+   logging("[%s] New child pid [%d]", params->cmd_name, fpid);
    // fpid>0: parent
    return fpid;
 }
@@ -473,15 +506,7 @@ int pipe_execv(command_info_t * const icmd, size_t const command_cnt,
                pid_t * child_pids) {
 
    pipe_info_block_used_fds(ipipe, pipe_cnt);
-
-   // Open up all the pipes.
-   for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
-      int const pres = pipe(ipipe[pidx].pipefds);
-      if(pres==-1) {
-         perror("pipe");
-         exit(10);
-      }
-   }
+   pipe_info_create_pipes(ipipe, pipe_cnt);
 
    // TODO: dup2 of '=' IN and OUTs
 
