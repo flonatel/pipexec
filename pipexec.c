@@ -292,8 +292,8 @@ void command_info_array_print(
    command_info_t * icmd,
    unsigned long cnt) {
    for(unsigned int cidx = 0; cidx < cnt; ++cidx) {
-      printf("CMD [%2d] [%s] [%s]\n",
-             cidx, icmd[cidx].cmd_name, icmd[cidx].path);
+      logging("Command [%2d] [%s] [%s]",
+              cidx, icmd[cidx].cmd_name, icmd[cidx].path);
    }
 }
 
@@ -333,10 +333,10 @@ typedef struct pipe_info pipe_info_t;
 
 void pipe_info_print(pipe_info_t * ipipe, unsigned long cnt) {
    for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
-      printf("PIPE [%2d] [%s] [%d] -[%d]- [%s] [%d]\n", pidx,
-             ipipe[pidx].from_name, ipipe[pidx].from_fd,
-             ipipe[pidx].connect,
-             ipipe[pidx].to_name, ipipe[pidx].to_fd);
+      logging("Pipe [%2d] [%s] [%d] -[%d]- [%s] [%d]", pidx,
+              ipipe[pidx].from_name, ipipe[pidx].from_fd,
+              ipipe[pidx].connect,
+              ipipe[pidx].to_name, ipipe[pidx].to_fd);
    }
 }
 
@@ -384,6 +384,27 @@ void pipe_info_parse(pipe_info_t * ipipe,
    }
 }
 
+// Block all FDs for really used pipes:
+// o open an additional unused pipe
+// o dup2() one fd of this unused pipe for all later on used fds.
+void pipe_info_block_used_fds(pipe_info_t * ipipe, unsigned long cnt) {
+   logging("Blocking used fds");
+
+   logging("Creating extra pipe for blocking fds");
+   int block_pipefds[2];
+   int const pres = pipe(block_pipefds);
+   if(pres==-1) {
+      perror("pipe");
+      exit(10);
+   }
+   logging("Fds for blocking [%d] [%d]", block_pipefds[0],
+           block_pipefds[1]);
+
+   for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
+   }
+   abort();
+}
+
 // Functions using the upper data structures
 static void pipe_execv_one(
    command_info_t const * params,
@@ -394,6 +415,9 @@ static void pipe_execv_one(
    //       fds. Close the rest.
    
 
+   abort();
+
+#if 0
    logging("pipe_execv_one child_fds [%d] [%d] [%d]",
            child_stdin_fd, child_stdout_fd, next_child_stdin_fd);
 
@@ -416,6 +440,7 @@ static void pipe_execv_one(
    if(next_child_stdin_fd!=-1) close(next_child_stdin_fd);
 
    execv(params->path, params->argv);
+#endif
 
    perror("execv");
    abort();
@@ -443,9 +468,11 @@ static pid_t pipe_execv_fork_one(
    return fpid;
 }
 
-int pipe_execv(command_info_t * const icmd, size_t const cmd_cnt,
+int pipe_execv(command_info_t * const icmd, size_t const command_cnt,
                pipe_info_t * const ipipe, size_t const pipe_cnt,
                pid_t * child_pids) {
+
+   pipe_info_block_used_fds(ipipe, pipe_cnt);
 
    // Open up all the pipes.
    for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
@@ -462,9 +489,9 @@ int pipe_execv(command_info_t * const icmd, size_t const cmd_cnt,
    // them to all children) is not a good idea.
    // ... but in this case there is no other way....
    for(size_t cidx=0; cidx<command_cnt; ++cidx) {
-      child_pids[param_idx]
+      child_pids[cidx]
          = pipe_execv_fork_one(
-            &params[param_idx], ipipe, pipe_cnt);
+            &icmd[cidx], ipipe, pipe_cnt);
    }
 
    // ToDo: Delete all the PIPES except INs and OUTs
@@ -620,8 +647,8 @@ int main(int argc, char * argv[]) {
    unsigned int const pipe_cnt
       = clp_count_pipes(optind, argc, argv);
 
-   printf("Commands [%d]\n", command_cnt);
-   printf("Pipes    [%d]\n", pipe_cnt);
+   logging("Number of commands in command line [%d]", command_cnt);
+   logging("Number of pipes in command line [%d]", pipe_cnt);
 
    command_info_t icmd[command_cnt];
    command_info_array_constrcutor(icmd, optind, argc, argv);
