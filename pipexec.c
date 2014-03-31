@@ -450,7 +450,6 @@ static void pipe_info_dup_in_pipes(char * cmd_name,
             logging("{%d} ERROR: dup2() [%d] -> [%d] failed [%s]", pidx,
                     ipipe[pidx].pipefds[1], ipipe[pidx].from_fd,
                     strerror(errno));
-            sleep(1);
             abort();
          }
       } else {
@@ -458,6 +457,26 @@ static void pipe_info_dup_in_pipes(char * cmd_name,
                  ipipe[pidx].from_name, ipipe[pidx].pipefds[1]);
          close(ipipe[pidx].pipefds[1]);
       }
+
+      // ToDo: copy of the above
+      if(strcmp(cmd_name, ipipe[pidx].to_name)==0) {
+         logging("{%d} [%s] Dup fd [%s] [%d] -> [%d]", pidx, cmd_name,
+                 ipipe[pidx].to_name, ipipe[pidx].pipefds[0],
+                 ipipe[pidx].to_fd);
+         close(ipipe[pidx].to_fd);
+         int const bfd=dup2(ipipe[pidx].pipefds[0], ipipe[pidx].to_fd);
+         if(bfd!=ipipe[pidx].to_fd) {
+            logging("{%d} ERROR: dup2() [%d] -> [%d] failed [%s]", pidx,
+                    ipipe[pidx].pipefds[0], ipipe[pidx].to_fd,
+                    strerror(errno));
+            abort();
+         }
+      } else {
+         logging("{%d} [%s] Closing [%s] [%d]", pidx, cmd_name,
+                 ipipe[pidx].to_name, ipipe[pidx].pipefds[0]);
+         close(ipipe[pidx].pipefds[0]);
+      }
+
    }
 }
 
