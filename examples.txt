@@ -6,3 +6,7 @@
 ./pipexec -l 2 -- [A cmd1 arg] [B cmd2 arg arg] [C cmd3] "{IN:0=A:0}" "{A:1>B:4}" "{B:4>C:0}" "{C:1>A:0}" "{C:5>B:1}" "{A:7>C:12}" "{C:4=OUT:1}"
 
 
+./pipexec -l 2 -- [PRINT /usr/bin/printf "Hello\nThis is pipexec test\nAssume this is a long SQL query with a very long output\nAnd you need to do two things with the result.\n" ] [PTEE /home/florath/devel/pe2/pipexec/ptee 5 6 ] [GLOBWC /usr/bin/wc ] [GREP /bin/grep pipe ] [LOCWC /usr/bin/wc ] "{PRINT:1>PTEE:0}" "{PTEE:5>GLOBWC:0}" "{PTEE:6>GREP:0}" "{GREP:1>LOCWC:0}"
+
+./pipexec -l 2 -- [PTEST /home/florath/devel/pe2/pipexec/ptest ] [TEE /usr/bin/tee /tmp/ptest1.log ] [DD /bin/dd of=/tmp/ptest2.log ] "{PTEST:1>TEE:0}" "{TEE:1>PTEST:0}" "{PTEST:3>DD:0}"
+

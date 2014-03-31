@@ -664,9 +664,6 @@ static unsigned int clp_count_commands(
 }
 
 
-
-
-
 int main(int argc, char * argv[]) {
 
    int logfd = -1;
