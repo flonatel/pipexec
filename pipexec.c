@@ -20,8 +20,8 @@
 #include <stdarg.h>
 #include <time.h>
 
-int const app_version = 1;
-int const app_subversion = 6;
+int const app_version = 2;
+int const app_subversion = 0;
 
 char const desc_copyight[] = { "(c) 2014 by flonatel GmbH & Co, KG" };
 char const desc_license[] = {"License GPLv2+: GNU GPL version 2 or later "
@@ -268,6 +268,17 @@ struct command_info {
 
 typedef struct command_info command_info_t;
 
+static unsigned int command_info_clp_count(
+   int start_argc, int argc, char * argv[]) {
+   unsigned int cnt = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i][0]=='[') {
+         ++cnt;
+      }
+   }
+   return cnt;
+}
+
 /**
  * Placement constructor:
  * pass in a unititialized memory region.
@@ -315,13 +326,9 @@ static void command_info_print(
  * This contains the source (name and fd) and the destination
  * (also name and fd).
  */
-enum pipe_connect { pc_directed, pc_assign };
-
 struct pipe_info {
    char *      from_name;
    int         from_fd;
-
-   enum pipe_connect connect;
 
    char *      to_name;
    int         to_fd;
@@ -331,16 +338,27 @@ struct pipe_info {
 
 typedef struct pipe_info pipe_info_t;
 
-void pipe_info_print(pipe_info_t * ipipe, unsigned long cnt) {
+static void pipe_info_print(pipe_info_t * ipipe, unsigned long cnt) {
    for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
-      logging("{%d} Pipe [%s] [%d] -[%d]- [%s] [%d]", pidx,
+      logging("{%d} Pipe [%s] [%d] > [%s] [%d]", pidx,
               ipipe[pidx].from_name, ipipe[pidx].from_fd,
-              ipipe[pidx].connect,
               ipipe[pidx].to_name, ipipe[pidx].to_fd);
    }
 }
 
-void pipe_info_parse(pipe_info_t * ipipe,
+static unsigned int pipe_info_clp_count(
+   int start_argc, int argc, char * argv[]) {
+   unsigned int cnt = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i][0]=='{' && strchr(argv[i], '>')!=NULL) {
+         ++cnt;
+      }
+   }
+   return cnt;
+}
+
+
+static void pipe_info_parse(pipe_info_t * ipipe,
                      int start_argc, int argc, char * argv[]) {
    unsigned int pipe_no = 0;
    for(int i = start_argc; i<argc; ++i) {
@@ -348,7 +366,7 @@ void pipe_info_parse(pipe_info_t * ipipe,
          continue;
       }
 
-      if(argv[i][0]=='{') {
+      if(argv[i][0]=='{' && strchr(argv[i], '>')!=NULL) {
          char * colon = strchr(&argv[i][1], ':');
          if(colon==NULL) {
             logging("Invalid syntax: no colon in pipe desc found");
@@ -360,12 +378,8 @@ void pipe_info_parse(pipe_info_t * ipipe,
          ipipe[pipe_no].from_fd = strtol(colon+1, &end_fd, 10);
 
          // connect symbol
-         if(*end_fd=='>') {
-            ipipe[pipe_no].connect = pc_directed;
-         } else if(*end_fd=='=') {
-            ipipe[pipe_no].connect = pc_assign;
-         } else {
-            logging("Invalid syntax: no colon or = in pipe desc found");
+         if(*end_fd!='>') {
+            logging("Invalid syntax: no '>' in pipe desc found");
             exit(1);
          }
 
@@ -480,17 +494,44 @@ static void pipe_info_dup_in_pipes(char * cmd_name,
    }
 }
 
+static void pipe_info_close_all(pipe_info_t * ipipe, unsigned long pipe_cnt) {
+   for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
+      logging("{%d} Closing all fd from [%d]",
+              pidx, ipipe[pidx].pipefds[1]);
+      close(ipipe[pidx].pipefds[1]);
+      logging("{%d} Closing all fd to [%d]",
+              pidx, ipipe[pidx].pipefds[0]);
+      close(ipipe[pidx].pipefds[0]);
+   }
+}
+
+struct parent_pipe_info {
+   int parent_fd;
+
+   char * child_name;
+   int child_fd;
+};
+
+typedef struct parent_pipe_info parent_pipe_info_t;
+
+static unsigned int parent_pipe_info_clp_count(
+   int start_argc, int argc, char * argv[]) {
+   unsigned int cnt = 0;
+   for(int i = start_argc; i<argc; ++i) {
+      if(argv[i][0]=='{' && strchr(argv[i], '=')!=NULL) {
+         ++cnt;
+      }
+   }
+   return cnt;
+}
+
+
 // Functions using the upper data structures
 static void pipe_execv_one(
    command_info_t const * params,
    pipe_info_t * const ipipe, size_t const pipe_cnt) {
 
    pipe_info_dup_in_pipes(params->cmd_name, ipipe, pipe_cnt);
-
-   
-   // TODO: run through the ipipe and dup2() in the correct
-   //       fds. Close the rest.
-   
 
    logging("[%s] Calling execv [%s]", params->cmd_name, params->path);
    execv(params->path, params->argv);
@@ -538,7 +579,7 @@ int pipe_execv(command_info_t * const icmd, size_t const command_cnt,
             &icmd[cidx], ipipe, pipe_cnt);
    }
 
-   // ToDo: Delete all the PIPES except INs and OUTs
+   pipe_info_close_all(ipipe, pipe_cnt);
 
    return 0;
 }
@@ -622,10 +663,6 @@ static unsigned int clp_count_commands(
    return clp_count_enteties('[', start_argc, argc, argv);
 }
 
-static unsigned int clp_count_pipes(
-   int start_argc, int argc, char * argv[]) {
-   return clp_count_enteties('{', start_argc, argc, argv);
-}
 
 
 
@@ -687,12 +724,15 @@ int main(int argc, char * argv[]) {
    install_signal_handler();
 
    unsigned int const command_cnt
-      = clp_count_commands(optind, argc, argv);
+      = command_info_clp_count(optind, argc, argv);
    unsigned int const pipe_cnt
-      = clp_count_pipes(optind, argc, argv);
+      = pipe_info_clp_count(optind, argc, argv);
+   unsigned int const parent_pipe_cnt
+      = parent_pipe_info_clp_count(optind, argc, argv);
 
    logging("Number of commands in command line [%d]", command_cnt);
    logging("Number of pipes in command line [%d]", pipe_cnt);
+   logging("Number of parent pipes in command line [%d]", parent_pipe_cnt);
 
    command_info_t icmd[command_cnt];
    command_info_array_constrcutor(icmd, optind, argc, argv);
@@ -746,7 +786,7 @@ int main(int argc, char * argv[]) {
             }
          }
 
-         logging("Killed all children - list should be empty:");
+         logging("Remaining children:");
          child_pids_print();
 
          if( g_restart && sleep_timer!=0 ) {
