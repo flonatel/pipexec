@@ -4,5 +4,5 @@ compiler:
   - clang
 script:
   - ./build/init_autotools.sh
-  - configure        
+  - ./configure        
   - make
