@@ -6,7 +6,8 @@ bin_PROGRAMS += bin/pipexec
 bin_pipexec_SOURCES = \
         src/pipexec.c \
 	src/logging.c \
-	src/version.c
+	src/version.c \
+	src/command_info.c
 
 # ptee
 

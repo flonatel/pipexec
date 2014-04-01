@@ -8,6 +8,7 @@
 
 #include "src/logging.h"
 #include "src/version.h"
+#include "src/command_info.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -188,72 +189,6 @@ void uninstall_signal_handler() {
    sigaction(SIGTERM, &sa_default, NULL);
 }
 
-/**
- * Path and parameters for exec one program.
- * Please note that here are only stored pointers -
- * typically to a memory of argv.
- */
-struct command_info {
-   char * cmd_name;
-   char * path;
-   char ** argv;
-};
-
-typedef struct command_info command_info_t;
-
-static unsigned int command_info_clp_count(
-   int start_argc, int argc, char * argv[]) {
-   unsigned int cnt = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i][0]=='[') {
-         ++cnt;
-      }
-   }
-   return cnt;
-}
-
-/**
- * Placement constructor:
- * pass in a unititialized memory region.
- */
-static void command_info_array_constrcutor(
-   command_info_t * icmd,
-   int start_argc, int argc, char * argv[]) {
-   unsigned int cmd_no = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i][0]=='[') {
-         icmd[cmd_no].cmd_name = &argv[i][1];
-         icmd[cmd_no].path = argv[i+1];
-         icmd[cmd_no].argv = &argv[i+1];
-         ++cmd_no;
-      } else if(argv[i][0]==']') {
-         argv[i] = NULL;
-      }
-   }
-}
-
-void command_info_array_print(
-   command_info_t * icmd,
-   unsigned long cnt) {
-   for(unsigned int cidx = 0; cidx < cnt; ++cidx) {
-      logging("Command [%2d] [%s] [%s]",
-              cidx, icmd[cidx].cmd_name, icmd[cidx].path);
-   }
-}
-
-#if 0
-static void command_info_constrcutor(
-   command_info_t * self,
-   char ** argv) {
-   self->path = *argv;
-   self->argv = argv;
-}
-#endif
-
-static void command_info_print(
-   command_info_t const * const self) {
-   logging("command_info path [%s]", self->argv[0]);
-}
 
 /*
  * Pipe information
