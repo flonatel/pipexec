@@ -7,12 +7,28 @@
 #include <stdio.h>
 #include <errno.h>
 
+char * pipes_end_info_parse(
+   pipes_end_info_t * const pend, char * const str) {
+
+   char * const colon = strchr(str, ':');
+   if(colon==NULL) {
+      logging("Invalid syntax: no colon in pipe desc found");
+      exit(1);
+   }
+   *colon = '\0';
+   pend->name = str;
+   char * end_fd;
+   pend->fd = strtol(colon+1, &end_fd, 10);
+   return end_fd;
+}
+
+
 void pipe_info_print(
    pipe_info_t const * const ipipe, unsigned long const cnt) {
    for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
       logging("{%d} Pipe [%s] [%d] > [%s] [%d]", pidx,
-              ipipe[pidx].from_name, ipipe[pidx].from_fd,
-              ipipe[pidx].to_name, ipipe[pidx].to_fd);
+              ipipe[pidx].from.name, ipipe[pidx].from.fd,
+              ipipe[pidx].to.name, ipipe[pidx].to.fd);
    }
 }
 
@@ -37,43 +53,33 @@ void pipe_info_parse(
       }
 
       if(argv[i][0]=='{' && strchr(argv[i], '>')!=NULL) {
-         char * colon = strchr(&argv[i][1], ':');
-         if(colon==NULL) {
-            logging("Invalid syntax: no colon in pipe desc found");
-            exit(1);
-         }
-         *colon = '\0';
-         ipipe[pipe_no].from_name = &argv[i][1];
-         char * end_fd;
-         ipipe[pipe_no].from_fd = strtol(colon+1, &end_fd, 10);
-
-         // connect symbol
-         if(*end_fd!='>') {
+         char * const end_from =
+            pipes_end_info_parse(&ipipe[pipe_no].from, &argv[i][1]);
+         if(*end_from!='>') {
             logging("Invalid syntax: no '>' in pipe desc found");
             exit(1);
          }
 
-         // ToDo: Copy from above
-         char * colon2 = strchr(end_fd, ':');
-         if(colon2==NULL) {
-            logging("Invalid syntax: no colon in pipe desc 2 found");
+         char * const end_to =
+            pipes_end_info_parse(&ipipe[pipe_no].to, end_from+1);
+         if(*end_to!='}') {
+            logging("Invalid syntax: no '}' closing pipe desc found");
             exit(1);
          }
-         *colon2 = '\0';
-         ipipe[pipe_no].to_name = end_fd+1;
-         ipipe[pipe_no].to_fd = strtol(colon2+1, &end_fd, 10);
-
          ++pipe_no;
       }
    }
 }
 
-// Dup2 a fd
-static void block_fd(int to_block, int blocking_fd) {
-   logging("Blocking fd [%d] with copy of [%d]", to_block, blocking_fd);
-   int const bfd=dup2(blocking_fd, to_block);
-   if(bfd!=to_block) {
-      abort();
+static void block_fd(
+   pipes_end_info_t const * const pend, int blocking_fd) {
+
+   if(pend->fd>2 && pend->fd!=blocking_fd) {
+      logging("Blocking fd [%d] with copy of [%d]", pend->fd, blocking_fd);
+      int const bfd=dup2(blocking_fd, pend->fd);
+      if(bfd!=pend->fd) {
+         abort();
+      }
    }
 }
 
@@ -96,14 +102,8 @@ void pipe_info_block_used_fds(
    logging("Fd for blocking [%d]", block_pipefds[0]);
 
    for(unsigned int pidx = 0; pidx < cnt; ++pidx) {
-      if(ipipe[pidx].from_fd>2
-         && ipipe[pidx].from_fd!=block_pipefds[0]) {
-         block_fd(ipipe[pidx].from_fd, block_pipefds[0]);
-      }
-      if(ipipe[pidx].to_fd>2
-         && ipipe[pidx].to_fd!=block_pipefds[0]) {
-         block_fd(ipipe[pidx].to_fd, block_pipefds[0]);
-      }
+      block_fd(&ipipe[pidx].from, block_pipefds[0]);
+      block_fd(&ipipe[pidx].to, block_pipefds[0]);
    }
 }
 
@@ -121,47 +121,34 @@ void pipe_info_create_pipes(
    }
 }
 
-// ToDo: check result of close.
+static void pipe_info_dup_in_piped_for_pipe_end(
+   size_t const pidx,
+   char * cmd_name, pipes_end_info_t const * const pend,
+   int pipe_fd) {
+   if(strcmp(cmd_name, pend->name)==0) {
+      logging("{%d} [%s] Dup fd [%s] [%d] -> [%d]", pidx, cmd_name,
+              pend->name, pipe_fd, pend->fd);
+      close(pend->fd);
+      int const bfd=dup2(pipe_fd, pend->fd);
+      if(bfd!=pend->fd) {
+         logging("{%d} ERROR: dup2() [%d] -> [%d] failed [%s]", pidx,
+                 pipe_fd, pend->fd, strerror(errno));
+         abort();
+      }
+   } else {
+      logging("{%d} [%s] Closing [%s] [%d]", pidx, cmd_name,
+              pend->name, pipe_fd);
+      close(pipe_fd);
+   }
+}
+
 void pipe_info_dup_in_pipes(
    pipe_info_t * ipipe, unsigned long pipe_cnt, char * cmd_name) {
    for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
-      if(strcmp(cmd_name, ipipe[pidx].from_name)==0) {
-         logging("{%d} [%s] Dup fd [%s] [%d] -> [%d]", pidx, cmd_name,
-                 ipipe[pidx].from_name, ipipe[pidx].pipefds[1],
-                 ipipe[pidx].from_fd);
-         close(ipipe[pidx].from_fd);
-         int const bfd=dup2(ipipe[pidx].pipefds[1], ipipe[pidx].from_fd);
-         if(bfd!=ipipe[pidx].from_fd) {
-            logging("{%d} ERROR: dup2() [%d] -> [%d] failed [%s]", pidx,
-                    ipipe[pidx].pipefds[1], ipipe[pidx].from_fd,
-                    strerror(errno));
-            abort();
-         }
-      } else {
-         logging("{%d} [%s] Closing [%s] [%d]", pidx, cmd_name,
-                 ipipe[pidx].from_name, ipipe[pidx].pipefds[1]);
-         close(ipipe[pidx].pipefds[1]);
-      }
-
-      // ToDo: copy of the above
-      if(strcmp(cmd_name, ipipe[pidx].to_name)==0) {
-         logging("{%d} [%s] Dup fd [%s] [%d] -> [%d]", pidx, cmd_name,
-                 ipipe[pidx].to_name, ipipe[pidx].pipefds[0],
-                 ipipe[pidx].to_fd);
-         close(ipipe[pidx].to_fd);
-         int const bfd=dup2(ipipe[pidx].pipefds[0], ipipe[pidx].to_fd);
-         if(bfd!=ipipe[pidx].to_fd) {
-            logging("{%d} ERROR: dup2() [%d] -> [%d] failed [%s]", pidx,
-                    ipipe[pidx].pipefds[0], ipipe[pidx].to_fd,
-                    strerror(errno));
-            abort();
-         }
-      } else {
-         logging("{%d} [%s] Closing [%s] [%d]", pidx, cmd_name,
-                 ipipe[pidx].to_name, ipipe[pidx].pipefds[0]);
-         close(ipipe[pidx].pipefds[0]);
-      }
-
+      pipe_info_dup_in_piped_for_pipe_end(
+         pidx, cmd_name, &ipipe[pidx].from, ipipe[pidx].pipefds[1]);
+      pipe_info_dup_in_piped_for_pipe_end(
+         pidx, cmd_name, &ipipe[pidx].to, ipipe[pidx].pipefds[0]);
    }
 }
 

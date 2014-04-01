@@ -12,6 +12,9 @@ struct pipes_end_info {
 
 typedef struct pipes_end_info pipes_end_info_t;
 
+char * pipes_end_info_parse(
+   pipes_end_info_t * const pend, char * const str);
+
 /*
  * Pipe information
  *
@@ -19,13 +22,9 @@ typedef struct pipes_end_info pipes_end_info_t;
  * (also name and fd).
  */
 struct pipe_info {
-   char *      from_name;
-   int         from_fd;
-
-   char *      to_name;
-   int         to_fd;
-
-   int         pipefds[2];
+   pipes_end_info_t from;
+   pipes_end_info_t to;
+   int pipefds[2];
 };
 
 typedef struct pipe_info pipe_info_t;
