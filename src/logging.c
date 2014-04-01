@@ -69,5 +69,6 @@ void logging(char const * fmt, ...) {
 
    // Ignore the result:
    // What to do when the result shows a failure? Logging?
-   (void)write(g_log_fd, pbuf, cbuf-pbuf);
+   ssize_t wr = write(g_log_fd, pbuf, cbuf-pbuf);
+   (void)wr;
 }
