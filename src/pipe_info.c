@@ -45,18 +45,18 @@ unsigned int pipe_info_clp_count(
 
 void pipe_info_parse(
    pipe_info_t * const ipipe,
-   int const start_argc, int const argc, char * const argv[]) {
+   int const start_argc, int const argc, char * const argv[], char const sep) {
    unsigned int pipe_no = 0;
    for(int i = start_argc; i<argc; ++i) {
       if(argv[i]==NULL) {
          continue;
       }
 
-      if(argv[i][0]=='{' && strchr(argv[i], '>')!=NULL) {
+      if(argv[i][0]=='{' && strchr(argv[i], sep)!=NULL) {
          char * const end_from =
             pipes_end_info_parse(&ipipe[pipe_no].from, &argv[i][1]);
          if(*end_from!='>') {
-            logging("Invalid syntax: no '>' in pipe desc found");
+            logging("Invalid syntax: no '%s' in pipe desc found", sep);
             exit(1);
          }
 

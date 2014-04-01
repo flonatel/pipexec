@@ -31,7 +31,8 @@ typedef struct pipe_info pipe_info_t;
 
 void pipe_info_parse(
    pipe_info_t * const ipipe,
-   int const start_argc, int const argc, char * const argv[]);
+   int const start_argc, int const argc, char * const argv[],
+   char const sep);
 void pipe_info_create_pipes(
    pipe_info_t * const ipipe, unsigned long const pipe_cnt);
 void pipe_info_close_all(
