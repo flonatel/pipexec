@@ -10,6 +10,7 @@
 #include "src/version.h"
 #include "src/command_info.h"
 #include "src/pipe_info.h"
+#include "src/parent_pipe_info.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -190,25 +191,6 @@ void uninstall_signal_handler() {
    sigaction(SIGTERM, &sa_default, NULL);
 }
 
-struct parent_pipe_info {
-   int parent_fd;
-
-   char * child_name;
-   int child_fd;
-};
-
-typedef struct parent_pipe_info parent_pipe_info_t;
-
-static unsigned int parent_pipe_info_clp_count(
-   int start_argc, int argc, char * argv[]) {
-   unsigned int cnt = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i][0]=='{' && strchr(argv[i], '=')!=NULL) {
-         ++cnt;
-      }
-   }
-   return cnt;
-}
 
 
 // Functions using the upper data structures
@@ -269,21 +251,6 @@ int pipe_execv(command_info_t * const icmd, size_t const command_cnt,
    return 0;
 }
 
-#if 0
-/**
- * Find next command.
- * Precondition: pipe symbol in argv must be already replaced by NULL.
- */
-static int find_next_cmd(int argc, char ** argv, int arg_idx) {
-   for(; arg_idx<argc; ++arg_idx) {
-      if(argv[arg_idx]==NULL) {
-         return arg_idx+1;
-      }
-   }
-   return argc;
-}
-#endif
-
 unsigned int next_running_child() {
    for(unsigned int child_idx=0; child_idx<g_child_cnt; ++child_idx) {
       if( g_child_pids[child_idx]!=0 ) {
@@ -333,25 +300,6 @@ static void remove_pid_file(char const * const pid_file) {
       logging("Cannot remove pid file, reason [%s]", strerror(errno));
    }
 }
-
-#if 0
-static unsigned int clp_count_enteties(
-   char entc, int start_argc, int argc, char * argv[]) {
-   unsigned int cnt = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i][0]==entc) {
-         ++cnt;
-      }
-   }
-   return cnt;
-}
-
-static unsigned int clp_count_commands(
-   int start_argc, int argc, char * argv[]) {
-   return clp_count_enteties('[', start_argc, argc, argv);
-}
-#endif
-
 
 int main(int argc, char * argv[]) {
 
