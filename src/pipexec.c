@@ -308,12 +308,14 @@ void command_info_array_print(
    }
 }
 
+#if 0
 static void command_info_constrcutor(
    command_info_t * self,
    char ** argv) {
    self->path = *argv;
    self->argv = argv;
 }
+#endif
 
 static void command_info_print(
    command_info_t const * const self) {
@@ -584,6 +586,7 @@ int pipe_execv(command_info_t * const icmd, size_t const command_cnt,
    return 0;
 }
 
+#if 0
 /**
  * Find next command.
  * Precondition: pipe symbol in argv must be already replaced by NULL.
@@ -596,6 +599,7 @@ static int find_next_cmd(int argc, char ** argv, int arg_idx) {
    }
    return argc;
 }
+#endif
 
 unsigned int next_running_child() {
    for(unsigned int child_idx=0; child_idx<g_child_cnt; ++child_idx) {
@@ -647,6 +651,7 @@ static void remove_pid_file(char const * const pid_file) {
    }
 }
 
+#if 0
 static unsigned int clp_count_enteties(
    char entc, int start_argc, int argc, char * argv[]) {
    unsigned int cnt = 0;
@@ -662,6 +667,7 @@ static unsigned int clp_count_commands(
    int start_argc, int argc, char * argv[]) {
    return clp_count_enteties('[', start_argc, argc, argv);
 }
+#endif
 
 
 int main(int argc, char * argv[]) {
