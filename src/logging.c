@@ -67,5 +67,7 @@ void logging(char const * fmt, ...) {
    written_bytes = log_fd_write_newline(cbuf, free_bytes);
    cbuf += written_bytes; free_bytes -= written_bytes;
 
-   write(g_log_fd, pbuf, cbuf-pbuf);
+   // Ignore the result:
+   // What to do when the result shows a failure? Logging?
+   (void)write(g_log_fd, pbuf, cbuf-pbuf);
 }
