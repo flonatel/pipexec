@@ -3,5 +3,6 @@ compiler:
   - gcc
   - clang
 script:
+  - ./build/init_autotools.sh
   - configure        
   - make
