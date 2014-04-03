@@ -3,6 +3,7 @@ AC_INIT([pipexec], [2.0], [info@flonatel.org])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
+m4_pattern_allow([AM_PROG_AR])
 AM_PROG_AR
 LT_INIT
 AC_PROG_CC
