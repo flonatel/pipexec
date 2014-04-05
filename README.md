@@ -10,6 +10,8 @@ Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org
 *pipexec* has two major use cases.
 
 ## Use Case: Handling Arbitrary Pipes between Processes ##
+
+### Basics ###
 When it comes to pipes in shells many tutorials introduce
 <code>stdin</code>, <code>stdout</code> and <code>stderr</code> which
 map to file descriptor 0, 1 and 2 respectively. 
@@ -23,6 +25,7 @@ And pictures like this are shown to explain what happens internally:
 
 ![Simple Pipe](doc/imgs/PipeSimpel1.png)
 
+### Advanced ###
 The more advanced sections provide information how to use constructs
 like <code>2>&1</code> to redirect <code>stderr</code> to
 <code>stdout</code>.  And then you might come to the sections for the
@@ -33,7 +36,8 @@ of processes like
 
 ![Simple Tree](doc/imgs/PipeTree1.png)
 
-And nobody will tell you this:
+### The Hidden Universe of File-Descriptors ###
+Nobody will tell you this:
 
 1. <code>stdin</code>, <code>stdout</code> and <code>stderr</code> are
 artificial definitions.
