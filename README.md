@@ -1,12 +1,13 @@
 pipexec
 =======
 
-Handling pipe of commands like a single command
+Building up a network of processes and pipes between them - acting
+like a single process.
 
 [![Build
 Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org/flonatel/pipexec)
 
-# Introduction
+# Introduction and Propose #
 *pipexec* has two major use cases.
 
 ## Use Case 1: Handling Arbitrary Pipes between Processes ##
@@ -14,7 +15,7 @@ Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org
 ### Basics ###
 When it comes to pipes in shells many tutorials introduce
 <code>stdin</code>, <code>stdout</code> and <code>stderr</code> which
-map to file descriptor 0, 1 and 2 respectively. 
+map to file descriptors 0, 1 and 2 respectively. 
 
 If you want to know how many times a line contains the word *bird* in
 chapter 1 and 2 of your text, you can use a command like:
@@ -46,7 +47,7 @@ artificial definitions.
 system each process has by default 1024 - which can be increased if
 needed.
 4. From starting up processes and generating pipes between them there
-is mostly no limitation on system basis; shells only support this in a
+is mostly no limitation on system level; shells only support this in a
 very limited way.
 
 This is the moment when *pipexec* drops in: with *pipexec* you can
@@ -60,6 +61,11 @@ gives
 
 ![Pipexec Cycle](doc/imgs/PipexecCycle.png)
 
+#### Complex ####
+*pipexec* supports any directed graph of processes and nodes like
+
+![Pipexec Complex](doc/imgs/PipexecComplex.png)
+
 ## Use Case 2: Handle Bunch of Processes like one single Process ##
 Most systems to start and run processes during system start-up time do
 not support pipe.  If you need to run a pipe of programs from an
@@ -69,7 +75,10 @@ Depending on your distribution you can be happy if it starts up - but
 when it comes to stopping, at least the current Debian
 start-stop-daemon and RHEL 6 daemon function fail.
 
-# Purpose
+# Details #
+With *pipexec* it is possible to build up a hole graph of commands
+connected by arbitrary pipes as edges.
+
 *pipexec* was designed to handle a hole pipe of commands to behave
 like a single command.
 
@@ -78,9 +87,6 @@ commands.  When *pipexec* receives a SIGTERM, SIGQUIT or SIGINT it
 stops the whole pipe and itself. When *pipexec* received a SIGHUP the
 pipe of commands is restarted. When one command in the pipe exits with
 a signal, the pipe of commands is restarted.
-
-With *pipexec* it is possible to build up a hole graph of commands
-connected by arbitrary pipes as edges.
 
 # Usage
     $ ./pipexec -h
