@@ -78,19 +78,6 @@ start-stop-daemon and RHEL 6 daemon function fail.
 Also here *pipexec* comes in: it starts up processes piped together,
 acts like a single process and supports pid file handling.
 
-# Details #
-With *pipexec* it is possible to build up a hole graph of commands
-connected by arbitrary pipes as edges.
-
-*pipexec* was designed to handle a hole pipe of commands to behave
-like a single command.
-
-During start-up *pipexec* fork() / pipe() / exec() the passed in
-commands.  When *pipexec* receives a SIGTERM, SIGQUIT or SIGINT it
-stops the whole pipe and itself. When *pipexec* received a SIGHUP the
-pipe of commands is restarted. When one command in the pipe exits with
-a signal, the pipe of commands is restarted.
-
 # Usage
     $ ./pipexec -h
     pipexec version 2.1
