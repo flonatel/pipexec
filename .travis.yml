@@ -6,3 +6,4 @@ script:
   - ./build/init_autotools.sh
   - ./configure        
   - make
+  - dpkg-buildpackage
