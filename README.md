@@ -36,8 +36,8 @@ of processes like
 
 ![Simple Tree](doc/imgs/PipeTree1.png)
 
-### The Hidden Universe of File-Descriptors ###
-Nobody will tell you this:
+### The Hidden Universe of File-Descriptors, Processes and Pipes ###
+Nobody will tell you:
 
 1. <code>stdin</code>, <code>stdout</code> and <code>stderr</code> are
 artificial definitions.
@@ -45,11 +45,12 @@ artificial definitions.
 3. There are more than three file descriptors. On a typical Linux
 system each process has by default 1024 - which can be increased if
 needed.
-4. If you want, you can have cycles, but I don't know a single shell
-which supports this.
+4. From starting up processes and generating pipes between them there
+is mostly no limitation on system basis; shells only support this in a
+very limited way.
 
 This is the moment when *pipexec* drops in: with *pipexec* you can
-build up any kind of processes and build up pipes between them.
+start up any kind of processes and build up pipes between them as you want.
 
 #### Cyclic ####
 
