@@ -6,4 +6,5 @@ script:
   - ./build/init_autotools.sh
   - ./configure        
   - make
+  - dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.1 --createorig --yes
   - dpkg-buildpackage
