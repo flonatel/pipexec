@@ -9,7 +9,7 @@ Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org
 # Introduction
 *pipexec* has two major use cases.
 
-## Use Case: Handling Arbitrary Pipes between Processes ##
+## Use Case 1: Handling Arbitrary Pipes between Processes ##
 
 ### Basics ###
 When it comes to pipes in shells many tutorials introduce
@@ -59,12 +59,7 @@ gives
 
 ![Pipexec Cycle](doc/imgs/PipexecCycle.png)
 
-If you want to communicate not only with one filedescriptor in one
-direction - like <code>cmd1 | cmd2 | cmd3</code> - but also need more
-sophisticated ways like connecting fd 7 of <code>cmd3</code> to fd 6
-of <code>cmd1</code> you are lost when using normal shells.
-
-## Use Case: Handle Bunch of Processes like one single Process ##
+## Use Case 2: Handle Bunch of Processes like one single Process ##
 Most systems to start and run processes during system start-up time do
 not support pipe.  If you need to run a pipe of programs from an
 /etc/init.d script you are mostly lost.
