@@ -75,6 +75,9 @@ Depending on your distribution you can be happy if it starts up - but
 when it comes to stopping, at least the current Debian
 start-stop-daemon and RHEL 6 daemon function fail.
 
+Also here *pipexec* comes in: it starts up processes piped together,
+acts like a single process and supports pid file handling.
+
 # Details #
 With *pipexec* it is possible to build up a hole graph of commands
 connected by arbitrary pipes as edges.
