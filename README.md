@@ -48,6 +48,16 @@ needed.
 4. If you want, you can have cycles, but I don't know a single shell
 which supports this.
 
+This is the moment when *pipexec* drops in: with *pipexec* you can
+build up any kind of processes and build up pipes between them.
+
+#### Cyclic ####
+
+    $ pipexec -- [A /usr/bin/cmd1 ] [B /usr/bin/cmd2 ] {A:1>B:0} {B:1>A:0}
+
+gives
+
+![Pipexec Cycle](doc/imgs/PipexecCycle.png)
 
 If you want to communicate not only with one filedescriptor in one
 direction - like <code>cmd1 | cmd2 | cmd3</code> - but also need more
