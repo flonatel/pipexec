@@ -7,7 +7,7 @@ compiler:
 before_script:
   - echo 'yes' | sudo add-apt-repository ppa:ubuntu-toolchain-r/test
   - sudo apt-get update
-  - sudo apt-get install dh_make
+  - sudo apt-get install dh-make
 
 script:
   - ./build/init_autotools.sh
