@@ -1,7 +1,14 @@
 language: c
+
 compiler:
   - gcc
   - clang
+
+before_script:
+  - echo 'yes' | sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+  - sudo apt-get install dh_make
+
 script:
   - ./build/init_autotools.sh
   - ./configure        
