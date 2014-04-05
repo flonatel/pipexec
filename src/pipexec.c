@@ -265,13 +265,18 @@ static void usage() {
    fprintf(stderr, "%s\n", desc_copyight);
    fprintf(stderr, "%s\n", desc_license);
    fprintf(stderr, "\n");
-   fprintf(stderr, "Usage: pipexec [options] -- command-pipe\n");
+   fprintf(stderr, "Usage: pipexec [options] -- process-pipe-graph\n");
    fprintf(stderr, "Options:\n");
    fprintf(stderr, " -h              display this help\n");
    fprintf(stderr, " -l logfd        set fd which is used for logging\n");
    fprintf(stderr, " -n name         set the name of the process\n");
    fprintf(stderr, " -p pidfile      specify a pidfile\n");
    fprintf(stderr, " -s sleep_time   time to wait before a restart\n");
+   fprintf(stderr, "\n");
+   fprintf(stderr, "process-pipe-graph is a list of process descriptions\n");
+   fprintf(stderr, "                   and pipe descriptions.\n");
+   fprintf(stderr, "process description: '[NAME /path/to/proc ]'\n");
+   fprintf(stderr, "pipe description: '{NAME1:fd1>NAME2:fd2}'\n");
    exit(1);
 }
 

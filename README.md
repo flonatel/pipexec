@@ -17,7 +17,7 @@ When it comes to pipes in shells many tutorials introduce
 <code>stdin</code>, <code>stdout</code> and <code>stderr</code> which
 map to file descriptors 0, 1 and 2 respectively. 
 
-If you want to know how many times a line contains the word *bird* in
+If you want to know how many lines contains the word *bird* in
 chapter 1 and 2 of your text, you can use a command like:
 
     $ cat Chap1.txt Chap2.txt | grep bird | wc -l
@@ -62,7 +62,7 @@ gives
 ![Pipexec Cycle](doc/imgs/PipexecCycle.png)
 
 #### Complex ####
-*pipexec* supports any directed graph of processes and nodes like
+*pipexec* supports any directed graph of processes and pipes like
 
 ![Pipexec Complex](doc/imgs/PipexecComplex.png)
 
@@ -93,11 +93,11 @@ a signal, the pipe of commands is restarted.
 
 # Usage
     $ ./pipexec -h
-    pipexec version 1.4
+    pipexec version 2.1
     (c) 2014 by flonatel GmbH & Co, KG
     License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
-    
-    Usage: pipexec [options] -- command-pipe
+
+    Usage: pipexec [options] -- process-pipe-graph
     Options:
      -h              display this help
      -l logfd        set fd which is used for logging
@@ -105,37 +105,38 @@ a signal, the pipe of commands is restarted.
      -p pidfile      specify a pidfile
      -s sleep_time   time to wait before a restart
 
+    process-pipe-graph is a list of process descriptions
+                       and pipe descriptions.
+    process description: '[NAME /path/to/proc ]'
+    pipe description: '{NAME1:fd1>NAME2:fd2}'
+
 Example:
 
-    $ pipexec /bin/ls -l "|" /bin/grep LIC
+    $ pipexec -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}'
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:36 LICENSE
 
-Be sure to escape the pipe symbol.
+Be sure to escape pipe descriptions.
 
 It is possible to specify a fd for logging.
 
-    $ pipexec -l 2 /bin/ls -l "|" /bin/grep LIC
-    2014-03-16 19:55:45;pexec;10746;pipexec version 1.0
-    2014-03-16 19:55:45;pexec;10746;(c) 2014 by flonatel GmbH & Co, KG
-    2014-03-16 19:55:45;pexec;10746;License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
-    2014-03-16 19:55:45;pexec;10746;Parsing command
-    2014-03-16 19:55:45;pexec;10746;Arg pos [  3]: [/bin/ls]
-    2014-03-16 19:55:45;pexec;10746;Arg pos [  4]: [-l]
-    2014-03-16 19:55:45;pexec;10746;Arg pos [  5]: [|]
-    2014-03-16 19:55:45;pexec;10746;Pipe symbol found at pos [5]
+    $ pipexec -l 2 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}'
+    2014-04-05 12:01:00;pipexec;3879;pipexec version 2.1
+    2014-04-05 12:01:00;pipexec;3879;(c) 2014 by flonatel GmbH & Co, KG
+    2014-04-05 12:01:00;pipexec;3879;License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
+    2014-04-05 12:01:00;pipexec;3879;Number of commands in command line [2]
+    2014-04-05 12:01:00;pipexec;3879;Number of pipes in command line [1]
+    2014-04-05 12:01:00;pipexec;3879;Number of parent pipes in command line [0]
+    2014-04-05 12:01:00;pipexec;3879;[LS] command_info path [/bin/ls]
+    2014-04-05 12:01:00;pipexec;3879;[GREP] command_info path [/bin/grep]
+    2014-04-05 12:01:00;pipexec;3879;{0} Pipe [LS] [1] > [GREP] [0]
+    2014-04-05 12:01:00;pipexec;3879;Start all [2] children
     [...]
 
 Or
 
-    $ pipexec -l 7 /bin/ls -l "|" /bin/grep LIC 7>/tmp/pipexec.log
+    $ pipexec -l 2 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}' 7>/tmp/pipexec.log
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:53 LICENSE
     $ head -2 /tmp/pipexec.log
-    2014-03-16 19:57:31;pexec;10762;pipexec version 1.0
-    2014-03-16 19:57:31;pexec;10762;(c) 2014 by flonatel GmbH & Co, KG
-
-
-Or using arbitrary graph pipe connects:
-
-    $ pipexec -- [A cmd1 arg ] [B cmd2 arg arg ] [C cmd3 ] "{IN:0=A:0}" "{A:1>B:4}" "{B:2>C:0}" "{C:1>A:0}" "{C:5>B:1}" "{A:2>C:12}" "{C:4=OUT:2}"
-
+    2014-04-05 12:01:00;pipexec;3879;pipexec version 2.1
+    2014-04-05 12:01:00;pipexec;3879;(c) 2014 by flonatel GmbH & Co, KG
 
