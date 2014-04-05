@@ -36,7 +36,6 @@ int main(int argc, char * argv[]) {
 
             if(wr==-1) {
                perror("write - closing fd");
-               abort();
                close(fds[fdidx]);
                fds[fdidx]=-1;
                continue;
