@@ -23,6 +23,27 @@ And pictures like this are shown to explain what happens internally:
 
 ![Simple Pipe](doc/imgs/PipeSimpel1.png)
 
+The more advanced sections provide information how to use constructs
+like <code>2>&1</code> to redirect <code>stderr</code> to
+<code>stdout</code>.  And then you might come to the sections for the
+pros and nerds. There is explained that you can build up a whole tree
+of processes like
+
+    $ find / 1> >(grep .txt) 2> >(wc >/tmp/w.log)
+
+![Simple Tree](doc/imgs/PipeTree1.png)
+
+And nobody will tell you this:
+
+1. <code>stdin</code>, <code>stdout</code> and <code>stderr</code> are
+artificial definitions.
+2. Also the relation to file descriptors 0, 1 and 2 is artificial.
+3. There are more than three file descriptors. On a typical Linux
+system each process has by default 1024 - which can be increased if
+needed.
+4. If you want, you can have cycles, but I don't know a single shell
+which supports this.
+
 
 If you want to communicate not only with one filedescriptor in one
 direction - like <code>cmd1 | cmd2 | cmd3</code> - but also need more
