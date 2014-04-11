@@ -7,9 +7,9 @@ set -e
 
 mkdir ./petmp
 cd petmp
-git clone https://github.com/flonatel/pipexec.git
+git clone ../pipexec
 cd pipexec
-git checkout directedgraphofpipes
+git checkout master
 rm -fr .git
 cd ..
 tar -cvf pipexec.tar pipexec
