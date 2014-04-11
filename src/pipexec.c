@@ -123,6 +123,15 @@ void child_pids_wait_all() {
                     "child signaled [%d]",
                     to_wait, status, WIFEXITED(status),
                     WEXITSTATUS(status), WIFSIGNALED(status));
+
+            if(WIFSIGNALED(status)) {
+               logging("Signaled with [%d]", WTERMSIG(status));
+               if(WTERMSIG(status)!=SIGTERM) {
+                  logging("Child terminated because of a different signal. "
+                          "Do not restart");
+                  set_terminate();
+               }
+            }
          }
          child_pids_unset(to_wait);
       }
