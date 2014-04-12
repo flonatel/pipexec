@@ -121,7 +121,7 @@ It is possible to specify a fd for logging.
 
 Or
 
-    $ pipexec -l 2 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}' 7>/tmp/pipexec.log
+    $ pipexec -l 7 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}' 7>/tmp/pipexec.log
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:53 LICENSE
     $ head -2 /tmp/pipexec.log
     2014-04-05 12:01:00;pipexec;3879;pipexec version 2.1

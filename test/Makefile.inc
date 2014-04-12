@@ -1,8 +1,8 @@
 # ptest
 
-bin_PROGRAMS += bin/ptest
+bin_PROGRAMS += test/ptest
 
-bin_ptest_SOURCES = \
+test_ptest_SOURCES = \
 	test/ptest.c
 
 

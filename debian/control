@@ -1,0 +1,17 @@
+Source: pipexec
+Section: utils
+Priority: optional
+Maintainer: Andreas Florath <pipexec@flonatel.org>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.3
+Homepage: https://github.com/flonatel/pipexec
+Vcs-Git: https://github.com/flonatel/pipexec.git
+Vcs-Browser: https://github.com/flonatel/pipexec
+
+Package: pipexec
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Run processes which arbitrary, even cyclic pipes
+ pipexec can start processes and connect them with an arbitrary
+ number of pipes.
+

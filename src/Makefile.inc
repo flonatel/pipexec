@@ -16,6 +16,7 @@ bin_pipexec_SOURCES = \
 bin_PROGRAMS += bin/ptee
 
 bin_ptee_SOURCES = \
+	src/version.c \
         src/ptee.c
 
 

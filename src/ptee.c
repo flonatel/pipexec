@@ -7,23 +7,62 @@
  *
  */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
+#include "src/version.h"
+
+static void usage() {
+   fprintf(stderr, "ptee from pipexec version %d.%d\n",
+           app_version, app_subversion);
+   fprintf(stderr, "%s\n", desc_copyight);
+   fprintf(stderr, "%s\n", desc_license);
+   fprintf(stderr, "\n");
+   fprintf(stderr, "Usage: ptee [options] fd [fd ...]\n");
+   fprintf(stderr, "Options:\n");
+   fprintf(stderr, " -h              display this help\n");
+   fprintf(stderr, " -r fd           fd to read from\n");
+   exit(1);
+}
 
 int main(int argc, char * argv[]) {
+
+   int read_fd = 0;
+
+   int opt;
+   while ((opt = getopt(argc, argv, "hr:")) != -1) {
+      switch (opt) {
+      case 'h':
+         usage();
+         break;
+      case 'r':
+         read_fd = atoi(optarg);
+         break;
+      default: /* '?' */
+         usage();
+      }
+   }
+
+   if(optind==argc) {
+      fprintf(stderr, "Error: No fds given\n");
+      usage();
+   }
+
    // All parameters are fds.
-   size_t const fd_cnt = argc - 1;
+   size_t const fd_cnt = argc - optind;
    int fds[fd_cnt];
 
-   for(int aidx=1; aidx<argc; ++aidx) {
-      fds[aidx-1] = atoi(argv[aidx]);
+   size_t fdidx = 0;
+   for(int aidx=optind; aidx<argc; ++aidx, ++fdidx) {
+      fds[fdidx] = atoi(argv[aidx]);
    }
 
    char buffer[4096];
    while(1) {
-      ssize_t const bytes_read = read(0, buffer, sizeof(buffer));
+      ssize_t const bytes_read = read(read_fd, buffer, sizeof(buffer));
       if(bytes_read<0 && errno==EINTR)
          continue;
       if(bytes_read<=0)
@@ -36,7 +75,6 @@ int main(int argc, char * argv[]) {
 
             if(wr==-1) {
                perror("write - closing fd");
-               abort();
                close(fds[fdidx]);
                fds[fdidx]=-1;
                continue;

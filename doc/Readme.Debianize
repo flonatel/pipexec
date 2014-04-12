@@ -1,0 +1,5 @@
+These commands must be given to build the package
+
+dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.1 --createorig
+
+dpkg-buildpackage
