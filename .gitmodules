@@ -1,3 +1,0 @@
-[submodule "contrib/ptl"]
-	path = contrib/ptl
-	url = https://github.com/flonatel/ptl.git
