@@ -55,8 +55,8 @@ void pipe_info_parse(
       if(argv[i][0]=='{' && strchr(argv[i], sep)!=NULL) {
          char * const end_from =
             pipes_end_info_parse(&ipipe[pipe_no].from, &argv[i][1]);
-         if(*end_from!='>') {
-            logging("Invalid syntax: no '%s' in pipe desc found", sep);
+         if(*end_from!=sep) {
+            logging("Invalid syntax: no '%c' in pipe desc found", sep);
             exit(1);
          }
 

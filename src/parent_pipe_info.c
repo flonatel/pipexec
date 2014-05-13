@@ -12,7 +12,7 @@ void parent_pipe_info_parse(
    pipe_info_parse(pinfo, start_argc, argc, argv, '=');
 
    for(size_t pidx=0; pidx<parent_pipe_cnt; ++pidx) {
-      if(strstr(pinfo[pidx].from.name, "PARENT")!=0) {
+      if(strstr(pinfo[pidx].from.name, "PARENT")!=pinfo[pidx].from.name) {
          logging("No PARENT specified");
          exit(10);
       }
@@ -36,7 +36,7 @@ unsigned int parent_pipe_info_clp_count(
 void parent_pipe_info_print(
    parent_pipe_info_t const * const ippipe, unsigned long const cnt) {
    for(unsigned int pidx=0; pidx < cnt; ++pidx) {
-      logging("{%d} Parent Pipe [%d] > [%s] [%d]", pidx,
+      logging("{%d} Parent Pipe [%d] = [%s] [%d]", pidx,
               ippipe[pidx].parent_fd,
               ippipe[pidx].to.name, ippipe[pidx].to.fd);
    }
