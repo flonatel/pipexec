@@ -39,8 +39,6 @@ void pipe_info_close_all(
    pipe_info_t const * const ipipe, unsigned long const pipe_cnt);
 void pipe_info_dup_in_pipes(
    pipe_info_t * ipipe, unsigned long pipe_cnt, char * cmd_name);
-void pipe_info_block_used_fds(
-   pipe_info_t const * const ipipe, unsigned long const cnt);
 void pipe_info_print(
    pipe_info_t const * const ipipe, unsigned long const cnt);
 

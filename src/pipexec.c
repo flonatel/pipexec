@@ -11,6 +11,7 @@
 #include "src/command_info.h"
 #include "src/pipe_info.h"
 #include "src/parent_pipe_info.h"
+#include "src/common_pipe_info.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -237,27 +238,24 @@ static pid_t pipe_execv_fork_one(
    return fpid;
 }
 
-int pipe_execv(command_info_t * const icmd, size_t const command_cnt,
-               pipe_info_t * const ipipe, size_t const pipe_cnt,
-               pid_t * child_pids) {
+int pipe_execv(command_info_t *const icmd, size_t const command_cnt,
+               pipe_info_t *const ipipe, size_t const pipe_cnt,
+               parent_pipe_info_t *const iparent, size_t const parent_pipe_cnt,
+               pid_t *child_pids) {
 
-   pipe_info_block_used_fds(ipipe, pipe_cnt);
-   pipe_info_create_pipes(ipipe, pipe_cnt);
+  common_pipe_info_block_used_fds(ipipe, pipe_cnt, iparent, parent_pipe_cnt);
+  pipe_info_create_pipes(ipipe, pipe_cnt);
 
-   // TODO: dup2 of '=' IN and OUTs
+  // Looks that messing around with the pipes (storing them and propagating
+  // them to all children) is not a good idea.
+  // ... but in this case there is no other way....
+  for (size_t cidx = 0; cidx < command_cnt; ++cidx) {
+    child_pids[cidx] = pipe_execv_fork_one(&icmd[cidx], ipipe, pipe_cnt);
+  }
 
-   // Looks that messing around with the pipes (storing them and propagating
-   // them to all children) is not a good idea.
-   // ... but in this case there is no other way....
-   for(size_t cidx=0; cidx<command_cnt; ++cidx) {
-      child_pids[cidx]
-         = pipe_execv_fork_one(
-            &icmd[cidx], ipipe, pipe_cnt);
-   }
+  pipe_info_close_all(ipipe, pipe_cnt);
 
-   pipe_info_close_all(ipipe, pipe_cnt);
-
-   return 0;
+  return 0;
 }
 
 unsigned int next_running_child() {
@@ -408,7 +406,9 @@ int main(int argc, char * argv[]) {
          set_restart(0);
          logging("Start all [%d] children", command_cnt);
          pipe_execv(icmd, command_cnt,
-                    ipipe, pipe_cnt, child_pids);
+           ipipe, pipe_cnt,
+           iparent, parent_pipe_cnt,
+           child_pids);
       }
 
       logging("Wait for termination of children");
