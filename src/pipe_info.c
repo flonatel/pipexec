@@ -85,10 +85,13 @@ void pipe_info_create_pipes(
    }
 }
 
+// This is similar to the parent_pipe_info_dup_in_piped_for_pipe_end
+// function - but has some differences in the data.
+// Might be hard to refactor (unify).
 static void pipe_info_dup_in_piped_for_pipe_end(
    size_t const pidx,
    char * cmd_name, pipes_end_info_t const * const pend,
-   int pipe_fd) {
+   int pipe_fd, int close_unused) {
    if(strcmp(cmd_name, pend->name)==0) {
       logging("{%d} [%s] Dup fd [%s] [%d] -> [%d]", pidx, cmd_name,
               pend->name, pipe_fd, pend->fd);
@@ -100,19 +103,21 @@ static void pipe_info_dup_in_piped_for_pipe_end(
          abort();
       }
    } else {
+     if(close_unused) {
       logging("{%d} [%s] Closing [%s] [%d]", pidx, cmd_name,
               pend->name, pipe_fd);
       close(pipe_fd);
+     }
    }
 }
 
 void pipe_info_dup_in_pipes(
-   pipe_info_t * ipipe, unsigned long pipe_cnt, char * cmd_name) {
+  pipe_info_t * ipipe, unsigned long pipe_cnt, char * cmd_name, int close_unused) {
    for(size_t pidx=0; pidx<pipe_cnt; ++pidx) {
       pipe_info_dup_in_piped_for_pipe_end(
-         pidx, cmd_name, &ipipe[pidx].from, ipipe[pidx].pipefds[1]);
+        pidx, cmd_name, &ipipe[pidx].from, ipipe[pidx].pipefds[1], close_unused);
       pipe_info_dup_in_piped_for_pipe_end(
-         pidx, cmd_name, &ipipe[pidx].to, ipipe[pidx].pipefds[0]);
+        pidx, cmd_name, &ipipe[pidx].to, ipipe[pidx].pipefds[0], close_unused);
    }
 }
 

@@ -201,24 +201,27 @@ void uninstall_signal_handler() {
    sigaction(SIGTERM, &sa_default, NULL);
 }
 
-
-
 // Functions using the upper data structures
-static void pipe_execv_one(
-   command_info_t const * params,
-   pipe_info_t * const ipipe, size_t const pipe_cnt) {
+static void pipe_execv_one(command_info_t const *params,
+                           pipe_info_t *const ipipe, size_t const pipe_cnt,
+                           parent_pipe_info_t *const iparent,
+                           size_t const parent_pipe_cnt) {
 
-   pipe_info_dup_in_pipes(ipipe, pipe_cnt, params->cmd_name);
+  pipe_info_dup_in_pipes(ipipe, pipe_cnt, params->cmd_name, 1);
+//  parent_pipe_info_dup_in_pipes(iparent, parent_pipe_cnt, params->cmd_name);
+  (void)iparent;
+  (void)parent_pipe_cnt;
 
-   logging("[%s] Calling execv [%s]", params->cmd_name, params->path);
-   execv(params->path, params->argv);
-   perror("execv");
-   abort();
+  logging("[%s] Calling execv [%s]", params->cmd_name, params->path);
+  execv(params->path, params->argv);
+  perror("execv");
+  abort();
 }
 
 static pid_t pipe_execv_fork_one(
    command_info_t const * params,
-   pipe_info_t * const ipipe, size_t const pipe_cnt) {
+   pipe_info_t * const ipipe, size_t const pipe_cnt,
+   parent_pipe_info_t *const iparent, size_t const parent_pipe_cnt) {
 
    command_info_print(params);
    pid_t const fpid = fork();
@@ -228,10 +231,12 @@ static pid_t pipe_execv_fork_one(
       exit(10);
    } else if(fpid==0) {
       uninstall_signal_handler();
-      pipe_execv_one(params, ipipe, pipe_cnt);
+      pipe_execv_one(params, ipipe, pipe_cnt, iparent, parent_pipe_cnt);
       // Neverreached
       abort();
    }
+
+   pipe_info_dup_in_pipes(ipipe, pipe_cnt, "PARENT", 0);
 
    logging("[%s] New child pid [%d]", params->cmd_name, fpid);
    // fpid>0: parent
@@ -245,12 +250,14 @@ int pipe_execv(command_info_t *const icmd, size_t const command_cnt,
 
   common_pipe_info_block_used_fds(ipipe, pipe_cnt, iparent, parent_pipe_cnt);
   pipe_info_create_pipes(ipipe, pipe_cnt);
+//  parent_pipe_info_create_pipes(iparent, parent_pipe_cnt);
 
   // Looks that messing around with the pipes (storing them and propagating
   // them to all children) is not a good idea.
   // ... but in this case there is no other way....
   for (size_t cidx = 0; cidx < command_cnt; ++cidx) {
-    child_pids[cidx] = pipe_execv_fork_one(&icmd[cidx], ipipe, pipe_cnt);
+    child_pids[cidx] = pipe_execv_fork_one(&icmd[cidx], ipipe, pipe_cnt,
+                                           iparent, parent_pipe_cnt);
   }
 
   pipe_info_close_all(ipipe, pipe_cnt);

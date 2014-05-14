@@ -3,6 +3,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <stdio.h>
 
 void parent_pipe_info_parse(
    parent_pipe_info_t * const iparentpipe, size_t const parent_pipe_cnt,
@@ -41,3 +44,4 @@ void parent_pipe_info_print(
               ippipe[pidx].to.name, ippipe[pidx].to.fd);
    }
 }
+
