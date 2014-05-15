@@ -1,3 +1,17 @@
+pipexec (2.3-1) unstable; urgency=low
+
+  * src/ptree.c: removed abort()
+
+  * src/ptree.c: added '-r n' command line parameter
+
+  * src/pipexec.c, src/logging.c: added syslog logging
+
+  * src/peet.c: added tool
+
+  * Documentation: Updated to new version and fixed typos 
+
+ -- Andreas Florath <pipexec@flonatel.org>  Thu, 15 May 2014 16:50:11 +0200
+
 pipexec (2.1-1) unstable; urgency=low
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>

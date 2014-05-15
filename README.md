@@ -80,13 +80,15 @@ acts like a single process and supports pid file handling.
 
 # Usage
     $ ./pipexec -h
-    pipexec version 2.1
-    (c) 2014 by flonatel GmbH & Co, KG
+    pipexec version 2.3
+    (c) 2014 by flonatel GmbH & Co. KG
     License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
 
     Usage: pipexec [options] -- process-pipe-graph
     Options:
      -h              display this help
+     -k              kill all child processes when one 
+                     terminates abnormally
      -l logfd        set fd which is used for logging
      -n name         set the name of the process
      -p pidfile      specify a pidfile
@@ -107,16 +109,14 @@ Be sure to escape pipe descriptions.
 It is possible to specify a fd for logging.
 
     $ pipexec -l 2 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}'
-    2014-04-05 12:01:00;pipexec;3879;pipexec version 2.1
-    2014-04-05 12:01:00;pipexec;3879;(c) 2014 by flonatel GmbH & Co, KG
-    2014-04-05 12:01:00;pipexec;3879;License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
-    2014-04-05 12:01:00;pipexec;3879;Number of commands in command line [2]
-    2014-04-05 12:01:00;pipexec;3879;Number of pipes in command line [1]
-    2014-04-05 12:01:00;pipexec;3879;Number of parent pipes in command line [0]
-    2014-04-05 12:01:00;pipexec;3879;[LS] command_info path [/bin/ls]
-    2014-04-05 12:01:00;pipexec;3879;[GREP] command_info path [/bin/grep]
-    2014-04-05 12:01:00;pipexec;3879;{0} Pipe [LS] [1] > [GREP] [0]
-    2014-04-05 12:01:00;pipexec;3879;Start all [2] children
+    2014-05-15 16:30:35;pipexec;23978;pipexec version 2.3
+    2014-05-15 16:30:35;pipexec;23978;Number of commands in command line [2]
+    2014-05-15 16:30:35;pipexec;23978;Number of pipes in command line [1]
+    2014-05-15 16:30:35;pipexec;23978;[LS] command_info path [/bin/ls]
+    2014-05-15 16:30:35;pipexec;23978;[GREP] command_info path [/bin/grep]
+    2014-05-15 16:30:35;pipexec;23978;{0} Pipe [LS] [1] > [GREP] [0]
+    2014-05-15 16:30:35;pipexec;23978;Cannot set restart flag - process will terminate
+    2014-05-15 16:30:35;pipexec;23978;Start all [2] children
     [...]
 
 Or
@@ -124,6 +124,6 @@ Or
     $ pipexec -l 7 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}' 7>/tmp/pipexec.log
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:53 LICENSE
     $ head -2 /tmp/pipexec.log
-    2014-04-05 12:01:00;pipexec;3879;pipexec version 2.1
-    2014-04-05 12:01:00;pipexec;3879;(c) 2014 by flonatel GmbH & Co, KG
+    2014-05-15 16:30:35;pipexec;23978;pipexec version 2.3
+    2014-05-15 16:30:35;pipexec;23978;Number of commands in command line [2]
 
