@@ -155,13 +155,15 @@ int main(int argc, char *argv[]) {
     }
 
     if (use_debug_log) {
-      (void)write(write_fd, "PEET_DEBUG[", 11);
+      ssize_t const wrl = write(write_fd, "PEET_DEBUG[", 11);
+      (void)wrl;
     }
 
     ssize_t const wr = write(write_fd, buffer, bytes_read);
 
     if (use_debug_log) {
-      (void)write(write_fd, "]", 1);
+      ssize_t const wrl = write(write_fd, "]", 1);
+      (void)wrl;
     }
 
     if (wr == -1) {
