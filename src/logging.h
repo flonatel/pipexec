@@ -8,6 +8,7 @@
  */
 
 void logging_set_global_log_fd(int fd);
+void logging_set_global_use_syslog();
 void logging(char const * fmt, ...);
 
 #endif

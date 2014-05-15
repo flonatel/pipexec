@@ -316,8 +316,12 @@ int main(int argc, char *argv[]) {
     case 'h':
       usage();
     case 'l': {
-      int logfd = atoi(optarg);
-      logging_set_global_log_fd(logfd);
+      if(*optarg=='s') {
+        logging_set_global_use_syslog();
+      } else {
+        int const logfd = atoi(optarg);
+        logging_set_global_log_fd(logfd);
+      }
     } break;
     case 'n':
       proc_name = optarg;

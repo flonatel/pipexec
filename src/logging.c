@@ -5,15 +5,21 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <syslog.h>
 
 /**
  * Logging is done by means of an additional file descriptor
  * which can be passed in by command line parameter.
  */
 int g_log_fd = -1;
+int g_log_use_syslog = 0;
 
 void logging_set_global_log_fd(int fd) {
    g_log_fd = fd;
+}
+
+void logging_set_global_use_syslog() {
+  g_log_use_syslog = 1;
 }
 
 static unsigned long log_fd_write_time(char * buf, unsigned long free_bytes) {
@@ -46,7 +52,7 @@ static unsigned long log_fd_write_newline(
  * the pid of this process and the passed in parameters.
  */
 void logging(char const * fmt, ...) {
-   if(g_log_fd==-1) {
+   if(g_log_fd==-1 && g_log_use_syslog==0) {
       return;
    }
 
@@ -67,8 +73,14 @@ void logging(char const * fmt, ...) {
    written_bytes = log_fd_write_newline(cbuf, free_bytes);
    cbuf += written_bytes; free_bytes -= written_bytes;
 
-   // Ignore the result:
-   // What to do when the result shows a failure? Logging?
-   ssize_t wr = write(g_log_fd, pbuf, cbuf-pbuf);
-   (void)wr;
+   if(g_log_fd!=-1) {
+     // Ignore the result:
+     // What to do when the result shows a failure? Logging?
+     ssize_t wr = write(g_log_fd, pbuf, cbuf-pbuf);
+     (void)wr;
+   }
+
+   if(g_log_use_syslog) {
+     syslog(LOG_PID | LOG_DAEMON, "%s", pbuf);
+   }
 }
