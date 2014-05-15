@@ -30,6 +30,7 @@
  */
 volatile int g_restart = 0;
 volatile int g_terminate = 0;
+volatile int g_kill_child_processes = 0;
 
 /**
  * Should the processes restart - pass in a 1.
@@ -95,6 +96,11 @@ void child_pids_print() {
 }
 
 void child_pids_kill_all() {
+  if(! g_kill_child_processes) {
+    logging("Do not kill child processes");
+    return;
+  }
+
   for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] != 0) {
       pid_t const to_kill = g_child_pids[child_idx];
@@ -266,6 +272,8 @@ static void usage() {
   fprintf(stderr, "Usage: pipexec [options] -- process-pipe-graph\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr, " -h              display this help\n");
+  fprintf(stderr, " -k              kill all child processes when one \n");
+  fprintf(stderr, "                 terminates abnormally\n");
   fprintf(stderr, " -l logfd        set fd which is used for logging\n");
   fprintf(stderr, " -n name         set the name of the process\n");
   fprintf(stderr, " -p pidfile      specify a pidfile\n");
@@ -311,10 +319,14 @@ int main(int argc, char *argv[]) {
   char *proc_name = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "hl:n:p:s:-")) != -1) {
+  while ((opt = getopt(argc, argv, "hkl:n:p:s:-")) != -1) {
     switch (opt) {
     case 'h':
       usage();
+      break;
+    case 'k':
+      g_kill_child_processes = 1;
+      break;
     case 'l': {
       if(*optarg=='s') {
         logging_set_global_use_syslog();
@@ -343,6 +355,12 @@ int main(int argc, char *argv[]) {
   if (optind == argc) {
     fprintf(stderr, "Error: No command-pipe given\n");
     usage();
+  }
+
+  if(sleep_timer==0) {
+    // When there is no restart give - terminate all processes when done
+    set_restart(0);
+    set_terminate();
   }
 
   logging("pipexec version %d.%d", app_version, app_subversion);

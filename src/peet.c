@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include "src/version.h"
 
+size_t const buffer_size = 4096;
+
 static void usage() {
   fprintf(stderr, "peet from pipexec version %d.%d\n", app_version,
           app_subversion);
@@ -24,17 +26,78 @@ static void usage() {
   fprintf(stderr, "Usage: peet [options] fd [fd ...]\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr, " -h              display this help\n");
+  fprintf(stderr, " -d              print some debug output\n");
   fprintf(stderr, " -w fd           fd to write to\n");
   exit(1);
+}
+
+int readable_fd_available(struct pollfd *fds, size_t fd_cnt) {
+  for (size_t fdidx = 0; fdidx < fd_cnt; ++fdidx) {
+    if (fds[fdidx].fd >= 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/*
+ * Read from any of the signaled fds.
+ * When a EOF is seen, handle the removal of the fd from the fds.
+ */
+ssize_t read_from_fd(struct pollfd *fds, size_t fd_cnt, char *buffer) {
+
+  for (size_t fdidx = 0; fdidx < fd_cnt; ++fdidx) {
+
+    // Ignore removed fd
+    if (fds[fdidx].fd < 0) {
+      continue;
+    }
+
+    if (fds[fdidx].revents & POLLIN) {
+      ssize_t const bytes_read = read(fds[fdidx].fd, buffer, sizeof(buffer));
+      if (bytes_read < 0 && errno == EINTR)
+        continue;
+      if (bytes_read < 0 && errno == EAGAIN)
+        // Fd would block
+        continue;
+      if (bytes_read <= 0) {
+        // EOF from this fd
+        // The handling of this was finished.
+        fds[fdidx].fd = -1;
+        if (!readable_fd_available(fds, fd_cnt)) {
+          // There are no fds to read from
+          return -1;
+        }
+        continue;
+      }
+      fds[fdidx].revents &= (!POLLIN);
+      return bytes_read;
+    }
+
+    if (fds[fdidx].revents & POLLHUP) {
+      fds[fdidx].fd = -1;
+      if (!readable_fd_available(fds, fd_cnt)) {
+        // There are no fds to read from
+        return -1;
+      }
+      continue;
+    }
+  }
+  abort();
+  return -1;
 }
 
 int main(int argc, char *argv[]) {
 
   int write_fd = 1;
+  int use_debug_log = 0;
 
   int opt;
-  while ((opt = getopt(argc, argv, "hw:")) != -1) {
+  while ((opt = getopt(argc, argv, "dhw:")) != -1) {
     switch (opt) {
+    case 'd':
+      use_debug_log = 1;
+      break;
     case 'h':
       usage();
       break;
@@ -52,7 +115,7 @@ int main(int argc, char *argv[]) {
   }
 
   // All parameters are fds.
-  size_t const fd_cnt = argc - optind;
+  size_t fd_cnt = argc - optind;
   // The structure for fd_cnt events
   struct pollfd fds[fd_cnt];
 
@@ -85,38 +148,30 @@ int main(int argc, char *argv[]) {
       exit(2);
     }
 
-    for (size_t fdidx = 0; fdidx < fd_cnt; ++fdidx) {
-      if (fds[fdidx].revents & POLLIN) {
-        fds[fdidx].revents = 0;
+    char buffer[buffer_size];
+    ssize_t const bytes_read = read_from_fd(fds, fd_cnt, buffer);
+    if (bytes_read == -1) {
+      continue;
+    }
 
-        char buffer[4096];
-        while (1) {
-          ssize_t const bytes_read =
-              read(fds[fdidx].fd, buffer, sizeof(buffer));
-          if (bytes_read < 0 && errno == EINTR)
-            continue;
-          if (bytes_read < 0 && errno == EAGAIN)
-            // Fd would block
-            break;
-          if (bytes_read <= 0) {
-            // EOF
-            // ???
-            abort();
-          }
+    if (use_debug_log) {
+      write(write_fd, "PEET_DEBUG[", 11);
+    }
 
-          ssize_t const wr = write(write_fd, buffer, bytes_read);
+    ssize_t const wr = write(write_fd, buffer, bytes_read);
 
-          if (wr == -1) {
-            perror("write");
-            exit(2);
-          }
+    if (use_debug_log) {
+      write(write_fd, "]", 1);
+    }
 
-          if (wr != bytes_read) {
-            perror("Could not write all data");
-            exit(2);
-          }
-        }
-      }
+    if (wr == -1) {
+      perror("write");
+      exit(2);
+    }
+
+    if (wr != bytes_read) {
+      perror("Could not write all data");
+      exit(2);
     }
   }
 }
