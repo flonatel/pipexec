@@ -342,8 +342,6 @@ int main(int argc, char *argv[]) {
   }
 
   logging("pipexec version %d.%d", app_version, app_subversion);
-  logging(desc_copyight);
-  logging(desc_license);
 
   if (pid_file != NULL) {
     write_pid_file(pid_file);
