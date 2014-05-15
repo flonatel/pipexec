@@ -8,9 +8,7 @@ bin_pipexec_SOURCES = \
 	src/logging.c \
 	src/version.c \
 	src/command_info.c \
-	src/pipe_info.c \
-	src/parent_pipe_info.c \
-	src/common_pipe_info.c
+	src/pipe_info.c
 
 # ptee
 
