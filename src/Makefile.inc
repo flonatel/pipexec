@@ -18,6 +18,14 @@ bin_ptee_SOURCES = \
 	src/version.c \
         src/ptee.c
 
+# peet
+
+bin_PROGRAMS += bin/peet
+
+bin_peet_SOURCES = \
+	src/version.c \
+        src/peet.c
+
 
 # Local Variables:
 # mode: makefile
