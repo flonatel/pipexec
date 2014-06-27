@@ -83,7 +83,7 @@ ssize_t read_from_fd(struct pollfd *fds, size_t fd_cnt, char *buffer) {
       continue;
     }
   }
-  abort();
+  // There are no fds to read from
   return -1;
 }
 
@@ -151,7 +151,8 @@ int main(int argc, char *argv[]) {
     char buffer[buffer_size];
     ssize_t const bytes_read = read_from_fd(fds, fd_cnt, buffer);
     if (bytes_read == -1) {
-      continue;
+      // No open FDs any more.
+      break;
     }
 
     if (use_debug_log) {
@@ -176,4 +177,6 @@ int main(int argc, char *argv[]) {
       exit(2);
     }
   }
+
+  return 0;
 }
