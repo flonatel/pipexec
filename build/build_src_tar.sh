@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 
+VERSION=2.4
+
 set -e
 
 # Must be executed from the outside.
@@ -12,10 +14,11 @@ cd pipexec
 git checkout master
 rm -fr .git
 cd ..
-tar -cvf pipexec.tar pipexec
-xz -9 pipexec.tar
+mv pipexec pipexec-${VERSION}
+tar -cvf pipexec-${VERSION}.tar pipexec-${VERSION}
+xz -9 pipexec-${VERSION}.tar
 cd ..
-mv petmp/pipexec.tar.xz .
+mv petmp/pipexec-${VERSION}.tar.xz .
 rm -fr ./petmp
 
 

@@ -1,3 +1,7 @@
+pipexec (2.4-1) unstable; urgency=low
+
+  * src/pipexec.c: Fixed signal handling
+
 pipexec (2.3-1) unstable; urgency=low
 
   * src/ptree.c: removed abort()
