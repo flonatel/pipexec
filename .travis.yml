@@ -13,5 +13,5 @@ script:
   - ./build/init_autotools.sh
   - ./configure        
   - make
-  - echo | dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.3 --createorig 
+  - echo | dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.4 --createorig 
   - dpkg-buildpackage
