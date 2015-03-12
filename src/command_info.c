@@ -19,20 +19,27 @@ unsigned int command_info_clp_count(
  * pass in a unititialized memory region.
  * Please note that this function modifies the 'argv'.
  */
-void command_info_array_constrcutor(
-   command_info_t * icmd,
-   int const start_argc, int const argc, char * argv[]) {
-   unsigned int cmd_no = 0;
-   for(int i = start_argc; i<argc; ++i) {
-      if(argv[i][0]=='[') {
-         icmd[cmd_no].cmd_name = &argv[i][1];
-         icmd[cmd_no].path = argv[i+1];
-         icmd[cmd_no].argv = &argv[i+1];
-         ++cmd_no;
-      } else if(argv[i][0]==']') {
-         argv[i] = NULL;
-      }
-   }
+void command_info_array_constrcutor(command_info_t *icmd, int const start_argc,
+                                    int const argc, char *argv[]) {
+  unsigned int cmd_no = 0;
+  for (int i = start_argc; i < argc; ++i) {
+    // This is the case when cmd is '[A ...'.
+    if (argv[i][0] == '[' && argv[i][1] != '\0') {
+      icmd[cmd_no].cmd_name = &argv[i][1];
+      icmd[cmd_no].path = argv[i + 1];
+      icmd[cmd_no].argv = &argv[i + 1];
+      ++cmd_no;
+    }
+    // This is the case when cmd is '[ A ...'.
+    else if (argv[i][0] == '[' && argv[i][1] == '\0') {
+      icmd[cmd_no].cmd_name = argv[i + 1];
+      icmd[cmd_no].path = argv[i + 2];
+      icmd[cmd_no].argv = &argv[i + 2];
+      ++cmd_no;
+    } else if (argv[i][0] == ']') {
+      argv[i] = NULL;
+    }
+  }
 }
 
 void command_info_array_print(
