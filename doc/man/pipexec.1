@@ -1,0 +1,136 @@
+.\" 
+.\" Man page for pipexec
+.\"
+.\" For license, see the 'LICENSE' file.
+.\"
+.TH pipexec 1 2015-03-13 "User Commands" "User Commands"
+.SH NAME
+pipexec \- create a directed graph of processes and pipes
+.SH DESCRIPTION
+.B pipexec
+creates an arbitrary network (directed graph) of processes and pipes
+in between.  It overcomes the shortcomings of shells that are
+typically only able to create non cyclic trees.
+.SH BACKGROUND
+Inside a shell it is possible to start processes and redirect the
+output to other processes.  With this functionality it is possible to
+start single processes, or connect one output file descriptor to an
+input file descriptor of another process.
+.P
+Example:
+.nf
+    cat Chap1.txt Chap2.txt | grep bird | wc -l
+.fi
+.P
+Three processes are created: the standard output (file descriptor (fd)
+1) of the 'cat' process is connected to the standard input (fd 0) of
+the 'grep' command, and the standard output of the 'grep' command is
+connected to the standard input (fd 0) of the 'wc' process.
+.P
+Please note that the assignment of name to file descriptor number is
+pure historical and has no technical background.
+.P
+Example:
+.nf
+    find / 1> >(grep .txt) 2> >(wc >/tmp/w.log)
+.fi
+.P
+In this more complex example, the fd 1 of the 'find' process is
+connected to fd 0 of 'grep' and fd 2 is connected to fd 0 of 'wc'.
+.P
+The limitation using this way of specifying processes and pipes is,
+that it is not possible to have any cycles.  It is impossible to
+e.g. pass a fd of 'wc' either to 'grep' or to 'find'.
+.P
+.B pipexec 
+overcomes these limitations.  It makes it possible to link any two
+arbitrary file descriptors in a set of processes.
+.SH USAGE
+
+.SH TCP KEEP ALIVE PARAMETERS
+Three parameters are used to change the TCP keep-alive behaviour. All
+parameters are in seconds.
+.P
+The variable names are taken from the Linux kernel configuration with
+a 'DD_' prefix for 'libDontDie'. The corresponding kernel parameters
+can be found in '/proc/sys/net/ipv4/'. 
+.SS DD_TCP_KEEPALIVE_TIME
+The time between the last TCP data packet sent and the first TCP KEEP
+ALIVE packet / probe.
+.SS DD_TCP_KEEPALIVE_INTVL
+The interval between two TCP KEEP ALIVE packets / probes.
+.SS DD_TCP_KEEPALIVE_PROBES
+The number of keep-alive probes sent before the socket enters an error
+state.
+.SH LIBDONTDIE PARAMETERS
+Two additional parameters change the behaviour of libdontdie itself:
+.B libdontdie:
+.SS DD_DEBUG
+If this is set to '1', each 'socket(2)' call will be logged
+to syslog - including all parameters and actions performed by
+.B libdontdie.
+.SS DD_EVAL_ENVIRONMENT_ONCE
+If this is set to '1' or not specified at all, all parameters are only
+evaluated once during startup.  If this parameter is set to '0', each
+time a socket call is executed, all parameters are evaluated again.
+This makes it possible to change parameters at runtime.  When setting
+this to '0', there is a bigger per socket call overhead therefore
+the performance will decrease.
+.P
+In languages that do not support setting the TCP KEEP ALIVE
+parameters, this is a workaround to enable different setting for
+different sockets.
+.sp
+.RS
+.nf
+	setenv("DD_TCP_KEEPALIVE_TIME", 60);
+	socket(...);
+	....
+	setenv("DD_TCP_KEEPALIVE_TIME", 180);
+	socket(...);
+.SH INSTALLATION LOCATION
+Depending on the installation method or the distribution, the
+installation directory of
+.B libdontdie
+might differ.
+.P
+One way to get the installation directory is using the packet manager
+to list all files of the packet (like 'dpkg -L <package_name>').
+.P
+Typically the library is installed in a directory under /usr/lib,
+/usr/lib64, or /usr/lib/<triple>.  A typical triple
+is 'x86_64-linux-gnu'.  Under Debian it is possible to get
+the triple with the command
+.sp
+.RS
+.nf
+	dpkg-architecture -qDEB_HOST_GNU_TYPE
+.SH USAGE
+All parameters are passed in as environment variables.  The
+.B libdontdie
+itself is preloaded.
+.P
+The example assumes, that the library is installed
+under '/usr/lib/libdontdie.so'.  This might be replaced by the real
+installation path.
+.P
+Example: to run the java program EchoClient with special TCP KEEP
+ALIVE setting, use:
+.sp
+.RS
+.nf
+DD_DEBUG=1 DD_TCP_KEEPALIVE_TIME=4 DD_TCP_KEEPALIVE_INTVL=5 \\ 
+   DD_TCP_KEEPALIVE_PROBES=6 LD_PRELOAD=/usr/lib/libdontdie.so \\ 
+   java EchoClient 127.0.0.1 22
+.SH "SEE ALSO"
+.BR socket(2),
+.BR setsockopt(2)
+.SH HISTORY
+The idea was first implemented in libkeepalive by Fabio Busatto.
+Because of some limitations regarding functionality and license, it
+was completely rewritten, corrected and extended.
+.SH AUTHOR
+Written by Andreas Florath (andreas@florath.net)
+.SH COPYRIGHT
+Copyright \(co 2015 by Andreas Florath (andreas@florath.net).
+License MIT.
