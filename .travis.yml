@@ -10,7 +10,6 @@ before_script:
   - sudo apt-get install dh-make
 
 script:
-  - ./build/init_autotools.sh
   - ./configure        
   - make
   - echo | dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.4 --createorig 
