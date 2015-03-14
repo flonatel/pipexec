@@ -3,14 +3,45 @@
 .\"
 .\" For license, see the 'LICENSE' file.
 .\"
-.TH pipexec 1 2015-03-13 "User Commands" "User Commands"
+.TH pipexec 1 2015-03-14 "User Commands" "User Commands"
 .SH NAME
 pipexec \- create a directed graph of processes and pipes
+.SH SYNOPSIS
+pipexec [OPTION]... [PROCESS DESCRIPTION]... [PIPE DESCRIPTION]...
 .SH DESCRIPTION
 .B pipexec
 creates an arbitrary network (directed graph) of processes and pipes
-in between.  It overcomes the shortcomings of shells that are
-typically only able to create non cyclic trees.
+in between.  Even cycles are possible.  It overcomes the shortcomings
+of shells that are typically only able to create non cyclic trees.
+.P
+.B pipexec
+also monitors all it's processes and is able to restart the whole
+network of processes if one process crashes.
+.SH OPTIONS
+.TP
+\fB\-h\fR
+print help and version information
+.TP
+\fB\-l logfd\fR
+use the given log file descriptor for logging.  If a 's' is specified,
+syslog is used.  Specifying '2' means e.g. log to stderr.
+.TP
+\fB\-p pidfile\fR
+with
+.B pipexec
+it is possible to handle pipes within SYSV-init scripts.  In some
+environments (e.g. RHEL6, Debian7) the start and stop routines need a
+pid file.  If this option is given, pipexec writes it own pid into the
+file shortly after start of pipexec.
+.TP
+\fB\-k\fR
+if one sub-process (child) gets killed and this options is given, all
+other sub-processes are also killed.  Afterwards all processes are
+restarted.
+.TP
+\fB\-s sleep_time\fR
+the time interval before a restart.  This option makes only sense when
+also the '-k' option is specified.
 .SH BACKGROUND
 Inside a shell it is possible to start processes and redirect the
 output to other processes.  With this functionality it is possible to
@@ -27,8 +58,8 @@ Three processes are created: the standard output (file descriptor (fd)
 the 'grep' command, and the standard output of the 'grep' command is
 connected to the standard input (fd 0) of the 'wc' process.
 .P
-Please note that the assignment of name to file descriptor number is
-pure historical and has no technical background.
+Please note that the assignment between names and file descriptor
+number is pure historical and has no technical background.
 .P
 Example:
 .nf
@@ -46,91 +77,68 @@ e.g. pass a fd of 'wc' either to 'grep' or to 'find'.
 overcomes these limitations.  It makes it possible to link any two
 arbitrary file descriptors in a set of processes.
 .SH USAGE
-
-.SH TCP KEEP ALIVE PARAMETERS
-Three parameters are used to change the TCP keep-alive behaviour. All
-parameters are in seconds.
+Building up a network of processes and pipes, there is the need to
+specify each element separately.
 .P
-The variable names are taken from the Linux kernel configuration with
-a 'DD_' prefix for 'libDontDie'. The corresponding kernel parameters
-can be found in '/proc/sys/net/ipv4/'. 
-.SS DD_TCP_KEEPALIVE_TIME
-The time between the last TCP data packet sent and the first TCP KEEP
-ALIVE packet / probe.
-.SS DD_TCP_KEEPALIVE_INTVL
-The interval between two TCP KEEP ALIVE packets / probes.
-.SS DD_TCP_KEEPALIVE_PROBES
-The number of keep-alive probes sent before the socket enters an error
-state.
-.SH LIBDONTDIE PARAMETERS
-Two additional parameters change the behaviour of libdontdie itself:
-.B libdontdie:
-.SS DD_DEBUG
-If this is set to '1', each 'socket(2)' call will be logged
-to syslog - including all parameters and actions performed by
-.B libdontdie.
-.SS DD_EVAL_ENVIRONMENT_ONCE
-If this is set to '1' or not specified at all, all parameters are only
-evaluated once during startup.  If this parameter is set to '0', each
-time a socket call is executed, all parameters are evaluated again.
-This makes it possible to change parameters at runtime.  When setting
-this to '0', there is a bigger per socket call overhead therefore
-the performance will decrease.
+The processes will be the nodes in the network (directed graph), the
+connections of the file descriptors between to processes are the
+edges.  Each node (process) has a unique name assigned to it.  This
+makes it possible to differentiate between using the same command more
+than once.
 .P
-In languages that do not support setting the TCP KEEP ALIVE
-parameters, this is a workaround to enable different setting for
-different sockets.
-.sp
-.RS
+The format of specifying a process is
 .nf
-	setenv("DD_TCP_KEEPALIVE_TIME", 60);
-	socket(...);
-	....
-	setenv("DD_TCP_KEEPALIVE_TIME", 180);
-	socket(...);
-.SH INSTALLATION LOCATION
-Depending on the installation method or the distribution, the
-installation directory of
-.B libdontdie
-might differ.
+    [ NAME /path/to/command arg1 arg2 ... argN ]
+.fi
 .P
-One way to get the installation directory is using the packet manager
-to list all files of the packet (like 'dpkg -L <package_name>').
+The first parameter 'NAME' must be a unique name.  The second
+parameter must be the full path of the command to execute.  Please
+note that always the full path must be specified, there is no PATH
+environment variable handling (execv(2) is used internally to span new
+processes).  The following parameters are the parameters passed to the
+command.
 .P
-Typically the library is installed in a directory under /usr/lib,
-/usr/lib64, or /usr/lib/<triple>.  A typical triple
-is 'x86_64-linux-gnu'.  Under Debian it is possible to get
-the triple with the command
-.sp
-.RS
+The whole definition must be enclosed in square brackets.  The square
+brackets must be given separately - before and after them must be a
+space.
+.P
+The format of specifying a pipe between processes is
 .nf
-	dpkg-architecture -qDEB_HOST_GNU_TYPE
-.SH USAGE
-All parameters are passed in as environment variables.  The
-.B libdontdie
-itself is preloaded.
+    {NAME_1:FD1>NAME_2:FD2}
+.fi
 .P
-The example assumes, that the library is installed
-under '/usr/lib/libdontdie.so'.  This might be replaced by the real
-installation path.
-.P
-Example: to run the java program EchoClient with special TCP KEEP
-ALIVE setting, use:
-.sp
-.RS
+Example
 .nf
-DD_DEBUG=1 DD_TCP_KEEPALIVE_TIME=4 DD_TCP_KEEPALIVE_INTVL=5 \\ 
-   DD_TCP_KEEPALIVE_PROBES=6 LD_PRELOAD=/usr/lib/libdontdie.so \\ 
-   java EchoClient 127.0.0.1 22
+    {LS:1>GREP:0}
+.fi
+.P
+The names are the names of the processes, the numbers are the number
+of the file descriptor that should be used to build the pipe in
+between.  When using pipexec from a shell (like bash) there is the
+need to escape the brackets or use quotation marks.
+.SH EXAMPLES
+The shell command
+.nf
+    cat Chap1.txt Chap2.txt | grep bird | wc -l
+.fi
+.P
+is equivalent to
+.nf
+    pipexec [ CAT /bin/cat Chap1.txt Chap2.txt ] \\
+      [ GREP /usr/bin/grep bird ] [ WC /usr/bin/wc -l ] \\
+      "{CAT:1>GREP:0}" "{GREP:1>WC:0}"
+.fi
+.P
+The pipexec equivalent is longer and more complex in this example.
+But pipexec can build up cycles that are impossible within a shell:
+.nf
+    pipexec [ A /bin/cmd1 ] [ B /bin/cmd2 ] "{A:1>B:0}" "{B:1>A:0}"
+.fi
 .SH "SEE ALSO"
-.BR socket(2),
-.BR setsockopt(2)
-.SH HISTORY
-The idea was first implemented in libkeepalive by Fabio Busatto.
-Because of some limitations regarding functionality and license, it
-was completely rewritten, corrected and extended.
+.BR bash(1),
+.BR execv(2)
 .SH AUTHOR
 Written by Andreas Florath (andreas@florath.net)
 .SH COPYRIGHT
 Copyright \(co 2015 by Andreas Florath (andreas@florath.net).
-License MIT.
+License GPL2.
