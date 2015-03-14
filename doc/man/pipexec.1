@@ -16,7 +16,10 @@ of shells that are typically only able to create non cyclic trees.
 .P
 .B pipexec
 also monitors all it's processes and is able to restart the whole
-network of processes if one process crashes.
+network of processes and pipes if one process crashes.  Therefore
+.B pipexec
+can be used in SYSV-init or systemd configuration to run a network of
+processes.
 .SH OPTIONS
 .TP
 \fB\-h\fR
@@ -24,7 +27,7 @@ print help and version information
 .TP
 \fB\-l logfd\fR
 use the given log file descriptor for logging.  If a 's' is specified,
-syslog is used.  Specifying '2' means e.g. log to stderr.
+syslog is used.  Example: Specifying '2' means log to stderr.
 .TP
 \fB\-p pidfile\fR
 with
@@ -40,13 +43,11 @@ other sub-processes are also killed.  Afterwards all processes are
 restarted.
 .TP
 \fB\-s sleep_time\fR
-the time interval before a restart.  This option makes only sense when
-also the '-k' option is specified.
+the time interval in seconds before a restart.  This option makes only
+sense when also the '-k' option is specified.
 .SH BACKGROUND
 Inside a shell it is possible to start processes and redirect the
-output to other processes.  With this functionality it is possible to
-start single processes, or connect one output file descriptor to an
-input file descriptor of another process.
+output to other processes.
 .P
 Example:
 .nf
@@ -130,7 +131,7 @@ is equivalent to
 .fi
 .P
 The pipexec equivalent is longer and more complex in this example.
-But pipexec can build up cycles that are impossible within a shell:
+But pipexec can build cycles that are impossible within a shell:
 .nf
     pipexec [ A /bin/cmd1 ] [ B /bin/cmd2 ] "{A:1>B:0}" "{B:1>A:0}"
 .fi

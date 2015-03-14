@@ -41,17 +41,15 @@ is equivalent to the shell command
     ptee 5 5>output.txt
 .fi
 .P
-Using pipexec(1): count all files in the complete file system and
-additionally count only those that have a uppercase 'A' in their
-name.  The file system will be scanned only once.  No temporary files
-are generated.
+Using pipexec(1): count all files in the file system and additionally
+count only those that have a uppercase 'A' in their name.  The file
+system will be scanned only once.  No temporary files are generated.
 .nf
-    pipexec [ LS /bin/ls -lR / ] [ PTEE /usr/bin/ptee 3 4 ] \\
+    pipexec [ LS /bin/ls -R / ] [ PTEE /usr/bin/ptee 3 4 ] \\
       [ WC1 /usr/bin/wc -l ] [ GREP /bin/grep A ] \\
       [ WC2 /usr/bin/wc -l ] "{LS:1>PTEE:0}" "{PTEE:3>WC1:0}" \\
       "{PTEE:4>GREP:0}" "{GREP:1>WC2:0}"
 .fi
-
 .SH "SEE ALSO"
 .BR pipexec(1),
 .BR peet(1),

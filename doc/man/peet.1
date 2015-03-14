@@ -12,7 +12,7 @@ peet [-h] [-w outfd] infd1 [infd2 ...]
 .B peet
 reads from many file descriptors and copies
 everything to one file descriptor.  If no file descriptor is given
-with the '-w' option, 1 (stdout) is used.
+('-w' option), 1 (stdout) is used.
 .P
 .B peet
 is text line based - i.e. only complete lines are written.  The order of
@@ -29,7 +29,7 @@ to de-multiplex text based output.
 print help and version information
 .TP
 \fB\-w outfd\fR
-use the given outfd as output file descriptor.  If this is not
+use the given outfd as output file descriptor.  If this option is not
 specified, 1 (stdout) is used.
 .SH EXAMPLES
 Read from stdin (fd 0), and file descriptors 9 and 11 and write to stdout.
@@ -39,13 +39,13 @@ Read from stdin (fd 0), and file descriptors 9 and 11 and write to stdout.
 .P
 Using pipexec(1): start two commands, both write their log to stdout
 and use rotatelogs(1) to write the logs to disk: (The file descriptors
-8 and 11 are chosen by random for this example.)
+8 and 11 are chosen by random.)
 .nf
     pipexec [ CMD1 /usr/bin/cmd1 ] [ CMD2 /usr/bin/cmd2 ] \\
       [ PEET /usr/bin/peet 8 11 ] \\
       [ RLOGS /usr/bin/rotatelogs /var/log/%Y%m%d_cmd.log ] \\
       "{CMD1:1>PEET:8}" "{CMD2:1>PEET:11}" \\
-      "{PEET:0>RLOGS:1}" 
+      "{PEET:1>RLOGS:0}"
 .fi
 .SH "SEE ALSO"
 .BR pipexec(1),
