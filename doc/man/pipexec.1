@@ -134,8 +134,12 @@ But pipexec can build up cycles that are impossible within a shell:
 .nf
     pipexec [ A /bin/cmd1 ] [ B /bin/cmd2 ] "{A:1>B:0}" "{B:1>A:0}"
 .fi
+.P
+For more examples see the ptee(1) and peet(1) man pages.
 .SH "SEE ALSO"
 .BR bash(1),
+.BR ptee(1),
+.BR peet(1),
 .BR execv(2)
 .SH AUTHOR
 Written by Andreas Florath (andreas@florath.net)

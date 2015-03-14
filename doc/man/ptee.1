@@ -1,0 +1,63 @@
+.\" 
+.\" Man page for pipexec
+.\"
+.\" For license, see the 'LICENSE' file.
+.\"
+.TH ptee 1 2015-03-14 "User Commands" "User Commands"
+.SH NAME
+ptee \- piped tee: read from one file descriptor and copy to many
+.SH SYNOPSIS
+ptee [-h] [-r infd] outfd1 [outfd2 ...]
+.SH DESCRIPTION
+.B ptee
+reads from one file descriptor (0 / stdin by default) and copies
+everything to all given output file descriptors.  ptee is a piped
+version of tee(1).
+.P
+.B ptee
+can be used with
+.B pipexec(1)
+to fit the output of one command into many other commands.
+.SH OPTIONS
+.TP
+\fB\-h\fR
+print help and version information
+.TP
+\fB\-r infd\fR
+use the given infd as input file descriptor.  If this is not
+specified, 0 (stdin) is used.
+.SH EXAMPLES
+Duplicate all data from stdin to stdout, stderr and fd 7:
+.nf
+    ptee 1 2 7
+.fi
+.P
+The command
+.nf
+    tee output.txt
+.fi
+is equivalent to the shell command
+.nf
+    ptee 5 5>output.txt
+.fi
+.P
+Using pipexec(1): count all files in the complete file system and
+additionally count only those that have a uppercase 'A' in their
+name.  The file system will be scanned only once.  No temporary files
+are generated.
+.nf
+    pipexec [ LS /bin/ls -lR / ] [ PTEE /usr/bin/ptee 3 4 ] \\
+      [ WC1 /usr/bin/wc -l ] [ GREP /bin/grep A ] \\
+      [ WC2 /usr/bin/wc -l ] "{LS:1>PTEE:0}" "{PTEE:3>WC1:0}" \\
+      "{PTEE:4>GREP:0}" "{GREP:1>WC2:0}"
+.fi
+
+.SH "SEE ALSO"
+.BR pipexec(1),
+.BR peet(1),
+.BR tee(1)
+.SH AUTHOR
+Written by Andreas Florath (andreas@florath.net)
+.SH COPYRIGHT
+Copyright \(co 2015 by Andreas Florath (andreas@florath.net).
+License GPL2.
