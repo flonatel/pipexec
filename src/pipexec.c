@@ -280,7 +280,7 @@ static void usage() {
   fprintf(stderr, "\n");
   fprintf(stderr, "process-pipe-graph is a list of process descriptions\n");
   fprintf(stderr, "                   and pipe descriptions.\n");
-  fprintf(stderr, "process description: '[NAME /path/to/proc ]'\n");
+  fprintf(stderr, "process description: '[ NAME /path/to/proc ]'\n");
   fprintf(stderr, "pipe description: '{NAME1:fd1>NAME2:fd2}'\n");
   exit(1);
 }
