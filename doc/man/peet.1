@@ -1,0 +1,59 @@
+.\" 
+.\" Man page for pipexec
+.\"
+.\" For license, see the 'LICENSE' file.
+.\"
+.TH peet 1 2015-03-14 "User Commands" "User Commands"
+.SH NAME
+peet \- piped reverse tee: read from many file descriptors and copy to one
+.SH SYNOPSIS
+peet [-h] [-w outfd] infd1 [infd2 ...]
+.SH DESCRIPTION
+.B peet
+reads from many file descriptors and copies
+everything to one file descriptor.  If no file descriptor is given
+with the '-w' option, 1 (stdout) is used.
+.P
+.B peet
+is text line based - i.e. only complete lines are written.  The order of
+lines written to the output file descriptor is pure random when there
+is more then one file descriptor where a complete line can be read from.
+.P
+.B peet
+can be used with
+.B pipexec(1)
+to de-multiplex text based output.
+.SH OPTIONS
+.TP
+\fB\-h\fR
+print help and version information
+.TP
+\fB\-w outfd\fR
+use the given outfd as output file descriptor.  If this is not
+specified, 1 (stdout) is used.
+.SH EXAMPLES
+Read from stdin (fd 0), and file descriptors 9 and 11 and write to stdout.
+.nf
+    peet 0 9 11
+.fi
+.P
+Using pipexec(1): start two commands, both write their log to stdout
+and use rotatelogs(1) to write the logs to disk: (The file descriptors
+8 and 11 are chosen by random for this example.)
+.nf
+    pipexec [ CMD1 /usr/bin/cmd1 ] [ CMD2 /usr/bin/cmd2 ] \\
+      [ PEET /usr/bin/peet 8 11 ] \\
+      [ RLOGS /usr/bin/rotatelogs /var/log/%Y%m%d_cmd.log ] \\
+      "{CMD1:1>PEET:8}" "{CMD2:1>PEET:11}" \\
+      "{PEET:0>RLOGS:1}" 
+.fi
+.SH "SEE ALSO"
+.BR pipexec(1),
+.BR peet(1),
+.BR rotatelogs(1),
+.BR tee(1)
+.SH AUTHOR
+Written by Andreas Florath (andreas@florath.net)
+.SH COPYRIGHT
+Copyright \(co 2015 by Andreas Florath (andreas@florath.net).
+License GPL2.
