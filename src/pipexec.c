@@ -5,6 +5,7 @@
  *
  */
 #define _POSIX_C_SOURCE 200809L
+#define _BSD_SOURCE
 
 #include "src/logging.h"
 #include "src/version.h"
