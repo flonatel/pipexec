@@ -13,4 +13,4 @@ script:
   - ./configure        
   - make
   - echo | dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.4 --createorig 
-  - dpkg-buildpackage
+  - dpkg-buildpackage -us -uc
