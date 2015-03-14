@@ -1,4 +1,4 @@
-AC_INIT([pipexec], [2.0], [info@flonatel.org])
+AC_INIT([pipexec], [2.0], [andreas@florath.net])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
