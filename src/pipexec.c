@@ -14,7 +14,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/prctl.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -275,7 +274,6 @@ static void usage() {
   fprintf(stderr, " -k              kill all child processes when one \n");
   fprintf(stderr, "                 terminates abnormally\n");
   fprintf(stderr, " -l logfd        set fd which is used for logging\n");
-  fprintf(stderr, " -n name         set the name of the process\n");
   fprintf(stderr, " -p pidfile      specify a pidfile\n");
   fprintf(stderr, " -s sleep_time   time to wait before a restart\n");
   fprintf(stderr, "\n");
@@ -316,10 +314,9 @@ int main(int argc, char *argv[]) {
 
   int sleep_timer = 0;
   char *pid_file = NULL;
-  char *proc_name = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "hkl:n:p:s:-")) != -1) {
+  while ((opt = getopt(argc, argv, "hkl:p:s:-")) != -1) {
     switch (opt) {
     case 'h':
       usage();
@@ -335,9 +332,6 @@ int main(int argc, char *argv[]) {
         logging_set_global_log_fd(logfd);
       }
     } break;
-    case 'n':
-      proc_name = optarg;
-      break;
     case 'p':
       pid_file = optarg;
       break;
@@ -367,14 +361,6 @@ int main(int argc, char *argv[]) {
 
   if (pid_file != NULL) {
     write_pid_file(pid_file);
-  }
-
-  if (proc_name != NULL) {
-    logging("Setting process name to [%s]", proc_name);
-    int const rp = prctl(PR_SET_NAME, (unsigned long)proc_name, 0, 0, 0);
-    if (rp == -1) {
-      logging("Setting of process name failed [%s]", strerror(errno));
-    }
   }
 
   install_signal_handler();
