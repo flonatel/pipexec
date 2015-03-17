@@ -38,8 +38,8 @@ Read from stdin (fd 0), and file descriptors 9 and 11 and write to stdout.
 .fi
 .P
 Using pipexec(1): start two commands, both write their log to stdout
-and use rotatelogs(1) to write the logs to disk: (The file descriptors
-8 and 11 are chosen by random.)
+and use one instance of rotatelogs(1) to write the logs to disk into a
+common log file: (The file descriptors 8 and 11 are chosen by random.)
 .nf
     pipexec [ CMD1 /usr/bin/cmd1 ] [ CMD2 /usr/bin/cmd2 ] \\
       [ PEET /usr/bin/peet 8 11 ] \\

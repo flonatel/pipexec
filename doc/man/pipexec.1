@@ -11,12 +11,13 @@ pipexec [OPTION]... [PROCESS DESCRIPTION]... [PIPE DESCRIPTION]...
 .SH DESCRIPTION
 .B pipexec
 creates an arbitrary network (directed graph) of processes and pipes
-in between.  Even cycles are possible.  It overcomes the shortcomings
+in between - even cycles are possible.  It overcomes the shortcomings
 of shells that are typically only able to create non cyclic trees.
 .P
 .B pipexec
-also monitors all it's processes and is able to restart the whole
-network of processes and pipes if one process crashes.  Therefore
+also monitors all it's child processes and is able to restart the
+whole network of processes and pipes if one crashes.
+Therefore
 .B pipexec
 can be used in SYSV-init or systemd configuration to run a network of
 processes.
@@ -26,7 +27,7 @@ processes.
 print help and version information
 .TP
 \fB\-l logfd\fR
-use the given log file descriptor for logging.  If a 's' is specified,
+use the given file descriptor for logging.  If a 's' is specified,
 syslog is used.  Example: Specifying '2' means log to stderr.
 .TP
 \fB\-p pidfile\fR
@@ -34,7 +35,7 @@ with
 .B pipexec
 it is possible to handle pipes within SYSV-init scripts.  In some
 environments (e.g. RHEL6, Debian7) the start and stop routines need a
-pid file.  If this option is given, pipexec writes it own pid into the
+pid file.  If this option is given, pipexec writes its own pid into the
 file shortly after start of pipexec.
 .TP
 \fB\-k\fR
@@ -78,7 +79,7 @@ e.g. pass a fd of 'wc' either to 'grep' or to 'find'.
 overcomes these limitations.  It makes it possible to link any two
 arbitrary file descriptors in a set of processes.
 .SH USAGE
-Building up a network of processes and pipes, there is the need to
+When building up a network of processes and pipes, there is the need to
 specify each element separately.
 .P
 The processes will be the nodes in the network (directed graph), the
