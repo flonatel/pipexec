@@ -7,11 +7,8 @@ compiler:
 before_script:
   - echo 'yes' | sudo add-apt-repository ppa:ubuntu-toolchain-r/test
   - sudo apt-get update
-  - sudo apt-get install dh-make
 
 script:
   - ./build/init_autotools.sh
   - ./configure        
   - make
-  - echo | dh_make --copyright gpl2 --email pipexec@flonatel.org --single --addmissing --packagename pipexec_2.4 --createorig 
-  - dpkg-buildpackage -us -uc
