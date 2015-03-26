@@ -7,12 +7,12 @@
 .SH NAME
 peet \- piped reverse tee: read from many file descriptors and copy to one
 .SH SYNOPSIS
-peet [-h] [-w outfd] infd1 [infd2 ...]
+peet [\-h] [\-w outfd] infd1 [infd2 ...]
 .SH DESCRIPTION
 .B peet
 reads from many file descriptors and copies
 everything to one file descriptor.  If no file descriptor is given
-('-w' option), 1 (stdout) is used.
+('\-w' option), 1 (stdout) is used.
 .P
 .B peet
 is text line based - i.e. only complete lines are written.  The order of

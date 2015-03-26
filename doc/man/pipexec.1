@@ -45,14 +45,14 @@ restarted.
 .TP
 \fB\-s sleep_time\fR
 the time interval in seconds before a restart.  This option makes only
-sense when also the '-k' option is specified.
+sense when also the '\-k' option is specified.
 .SH BACKGROUND
 Inside a shell it is possible to start processes and redirect the
 output to other processes.
 .P
 Example:
 .nf
-    cat Chap1.txt Chap2.txt | grep bird | wc -l
+    cat Chap1.txt Chap2.txt | grep bird | wc \-l
 .fi
 .P
 Three processes are created: the standard output (file descriptor (fd)
@@ -121,13 +121,13 @@ need to escape the brackets or use quotation marks.
 .SH EXAMPLES
 The shell command
 .nf
-    cat Chap1.txt Chap2.txt | grep bird | wc -l
+    cat Chap1.txt Chap2.txt | grep bird | wc \-l
 .fi
 .P
 is equivalent to
 .nf
     pipexec [ CAT /bin/cat Chap1.txt Chap2.txt ] \\
-      [ GREP /usr/bin/grep bird ] [ WC /usr/bin/wc -l ] \\
+      [ GREP /usr/bin/grep bird ] [ WC /usr/bin/wc \-l ] \\
       "{CAT:1>GREP:0}" "{GREP:1>WC:0}"
 .fi
 .P
