@@ -126,3 +126,21 @@ Or
     2014-05-15 16:30:35;pipexec;23978;pipexec version 2.4
     2014-05-15 16:30:35;pipexec;23978;Number of commands in command line [2]
 
+# Installation #
+
+## From Packages ##
+The following Linux distributions include the package.  You can
+install pipexec with the distribution's package manager:
+* [Archlinux](https://aur.archlinux.org/packages/pipexec-git)
+
+## From Source ##
+Download the tar ball
+
+$ tar -xf pipexec-X.Y.Z.tar.xz
+$ mkdir PIPEXECBUILD
+$ cd PIPEXECBUILD
+$ ${PWD}/../pipexec-X.Y.Z/configure
+$ make
+
+There will be three binaries in the bin directory: pipexec, ptee and
+peet.  You can copy / install them as you need.
