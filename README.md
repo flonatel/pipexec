@@ -136,11 +136,11 @@ install pipexec with the distribution's package manager:
 ## From Source ##
 Download the tar ball
 
-$ tar -xf pipexec-X.Y.Z.tar.xz
-$ mkdir PIPEXECBUILD
-$ cd PIPEXECBUILD
-$ ${PWD}/../pipexec-X.Y.Z/configure
-$ make
+    $ tar -xf pipexec-X.Y.Z.tar.xz
+    $ mkdir PIPEXECBUILD
+    $ cd PIPEXECBUILD
+    $ ${PWD}/../pipexec-X.Y.Z/configure
+    $ make
 
 There will be three binaries in the bin directory: pipexec, ptee and
 peet.  You can copy / install them as you need.
