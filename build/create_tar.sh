@@ -3,6 +3,8 @@
 # Create release tarball
 #
 
+PKGBUILDDIR="../pbuild"
+
 set -e
 
 if test $# -ne 1;
@@ -13,13 +15,13 @@ fi
 
 RELNUM=$1
 
-rm -fr pbuild
-mkdir -p pbuild
+rm -fr ${PKGBUILDDIR}
+mkdir -p ${PKGBUILDDIR}
 
 git tag ${RELNUM}
-git archive --format=tar --prefix=pipexec-${RELNUM}/ ${RELNUM} | tar -C pbuild -xf -
+git archive --format=tar --prefix=pipexec-${RELNUM}/ ${RELNUM} | tar -C ${PKGBUILDDIR} -xf -
 
-cd pbuild/pipexec-${RELNUM}
+cd ${PKGBUILDDIR}/pipexec-${RELNUM}
 
 bash ./build/init_autotools.sh
 
