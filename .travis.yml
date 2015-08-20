@@ -4,9 +4,10 @@ compiler:
   - gcc
   - clang
 
-before_script:
-  - echo 'yes' | sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-  - sudo apt-get update
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
 
 script:
   - ./build/init_autotools.sh
