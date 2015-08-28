@@ -137,6 +137,7 @@ install pipexec with the distribution's package manager:
 * [Archlinux](https://aur.archlinux.org/packages/pipexec-git)
 * [Raspbian](https://www.raspbian.org/)
 * [Kali](http://www.kali.org)
+* [AOS](http://aos.ion.nu/buildwiki/pipexec.html)
 
 ## From Source ##
 [Download the latest tar ball](https://github.com/flonatel/pipexec/releases)
