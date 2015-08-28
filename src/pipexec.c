@@ -265,7 +265,7 @@ unsigned int next_running_child() {
 }
 
 static void usage() {
-  fprintf(stderr, "pipexec version %d.%d\n", app_version, app_subversion);
+  fprintf(stderr, "pipexec version %s\n", app_version);
   fprintf(stderr, "%s\n", desc_copyight);
   fprintf(stderr, "%s\n", desc_license);
   fprintf(stderr, "\n");
@@ -358,7 +358,7 @@ int main(int argc, char *argv[]) {
     set_terminate();
   }
 
-  logging("pipexec version %d.%d", app_version, app_subversion);
+  logging("pipexec version %s", app_version);
 
   if (pid_file != NULL) {
     write_pid_file(pid_file);

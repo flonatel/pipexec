@@ -1,4 +1,4 @@
-AC_INIT([pipexec], [2.0], [andreas@florath.net])
+AC_INIT([pipexec], m4_esyscmd([./version.sh | tr -d '\n']), [andreas@florath.net])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
@@ -78,6 +78,8 @@ fi
 
 CFLAGS="-std=c99 ${COMMON_FLAGS}"
 CXXFLAGS="-std=c++11 ${COMMON_FLAGS}"
+
+AM_CONDITIONAL([USE_VERSION_FILE], [test -f src/app_version.c])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([

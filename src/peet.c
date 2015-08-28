@@ -18,8 +18,7 @@
 size_t const buffer_size = 4096;
 
 static void usage() {
-  fprintf(stderr, "peet from pipexec version %d.%d\n", app_version,
-          app_subversion);
+  fprintf(stderr, "peet from pipexec version %s\n", app_version);
   fprintf(stderr, "%s\n", desc_copyight);
   fprintf(stderr, "%s\n", desc_license);
   fprintf(stderr, "\n");
