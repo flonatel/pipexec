@@ -1,15 +1,14 @@
 pipexec
 =======
 
-Building up a network of processes and pipes between them - acting
-like a single process.
+Build a network of processes and connecting pipes - and have them act like a single process.
 
 [![Build Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org/flonatel/pipexec)
 [![Release](https://img.shields.io/github/release/flonatel/pipexec.svg)](https://github.com/flonatel/pipexec/releases/latest)
 [![License](https://img.shields.io/github/license/flonatel/pipexec.svg)](#license)
 [![Issues](https://img.shields.io/github/issues/flonatel/pipexec.svg)](https://github.com/flonatel/pipexec/issues)
 
-# Introduction and Propose #
+# Introduction and Purpose #
 *pipexec* has two major use cases.
 
 ## Use Case 1: Handling Arbitrary Pipes between Processes ##

@@ -54,7 +54,7 @@ ssize_t read_from_fd(struct pollfd *fds, size_t fd_cnt, char *buffer) {
     }
 
     if (fds[fdidx].revents & POLLIN) {
-      ssize_t const bytes_read = read(fds[fdidx].fd, buffer, sizeof(buffer));
+      ssize_t const bytes_read = read(fds[fdidx].fd, buffer, buffer_size);
       if (bytes_read < 0 && errno == EINTR)
         continue;
       if (bytes_read < 0 && errno == EAGAIN)
