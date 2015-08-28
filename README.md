@@ -137,9 +137,10 @@ install pipexec with the distribution's package manager:
 * [Ubuntu](http://packages.ubuntu.com/wily/pipexec)
 * [Archlinux](https://aur.archlinux.org/packages/pipexec-git)
 * [Raspbian](https://www.raspbian.org/)
+* [Kali](http://www.kali.org)
 
 ## From Source ##
-Download the tar ball
+[Download the latest tar ball](https://github.com/flonatel/pipexec/releases)
 
     $ tar -xf pipexec-X.Y.Z.tar.xz
     $ mkdir PIPEXECBUILD
