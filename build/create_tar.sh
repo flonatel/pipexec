@@ -23,6 +23,7 @@ git archive --format=tar --prefix=pipexec-${RELNUM}/ ${RELNUM} | tar -C ${PKGBUI
 
 cd ${PKGBUILDDIR}/pipexec-${RELNUM}
 
+echo ${RELNUM} >version.txt
 bash ./build/init_autotools.sh
 
 cd ..
