@@ -2,7 +2,7 @@
 if !USE_VERSION_FILE
 .FORCE: src/app_version.c
 src/app_version.c:
-	 bash $(top_srcdir)/build/version-gen.sh ${top_srcdir}
+	 /bin/sh $(top_srcdir)/build/version-gen.sh ${top_srcdir}
 endif
 
 # pipexec itself

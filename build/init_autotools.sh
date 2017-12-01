@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # This must be called from within the top source dir.
 #
