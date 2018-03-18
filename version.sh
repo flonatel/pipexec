@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 TOPSRCDIR=""
 if test $# -eq 1;
 then
-    TOPSRCDIR=$1
-    cd ${TOPSRCDIR}
+    TOPSRCDIR="$1"
+    cd "${TOPSRCDIR}"
 fi
 
 if test -f version.txt;
