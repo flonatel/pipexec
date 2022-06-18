@@ -1,9 +1,11 @@
 .\" 
 .\" Man page for pipexec
 .\"
+.\" Copyright 2015,2022 by Andreas Florath
 .\" For license, see the 'LICENSE' file.
+.\" SPDX-License-Identifier: GPL-2.0-or-later
 .\"
-.TH pipexec 1 2015-03-14 "User Commands" "User Commands"
+.TH pipexec 1 2022-07-18 "User Commands" "User Commands"
 .SH NAME
 pipexec \- create a directed graph of processes and pipes
 .SH SYNOPSIS
@@ -118,6 +120,9 @@ The names are the names of the processes, the numbers are the number
 of the file descriptor that should be used to build the pipe in
 between.  When using pipexec from a shell (like bash) there is the
 need to escape the brackets or use quotation marks.
+.SH RETURN
+pipexec returns 1 if any of the child processes fails else 0 is
+returned.
 .SH EXAMPLES
 The shell command
 .nf
@@ -146,5 +151,5 @@ For more examples see the ptee(1) and peet(1) man pages.
 .SH AUTHOR
 Written by Andreas Florath (andreas@florath.net)
 .SH COPYRIGHT
-Copyright \(co 2015 by Andreas Florath (andreas@florath.net).
+Copyright \(co 2015,2022 by Andreas Florath (andreas@florath.net).
 License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.

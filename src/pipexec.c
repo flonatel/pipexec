@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <errno.h>
 #include <time.h>
@@ -400,6 +401,8 @@ int main(int argc, char *argv[]) {
   g_child_pids = child_pids;
   g_child_cnt = command_cnt;
 
+  bool child_failed = false;
+
   do {
     if (next_running_child() == command_cnt) {
       set_restart(0);
@@ -428,6 +431,10 @@ int main(int argc, char *argv[]) {
                 WIFSIGNALED(status));
         child_pids_unset(cpid);
 
+	if( status!=0 ) {
+	  child_failed = true;
+	}
+
         if (!WIFEXITED(status) || WIFSIGNALED(status)) {
           logging("Unnormal termination/signaling of child - restarting");
           set_restart(1);
@@ -452,5 +459,5 @@ int main(int argc, char *argv[]) {
 
   logging("exiting");
 
-  return 0;
+  return child_failed ? 1 : 0;
 }
