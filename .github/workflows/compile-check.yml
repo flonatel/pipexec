@@ -9,9 +9,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-        # This is needed as the version.sh script uses
-        # the history.
-        fetch-depth: 0
+        with:
+          # This is needed as the version.sh script uses
+          # the history.
+          fetch-depth: 0
       - run: |
           bash -x build/init_autotools.sh
           mkdir -p COMPILE
