@@ -1,0 +1,18 @@
+---
+
+name: CompileCheck
+
+on: [push]
+
+jobs:
+  compile-gcc-12:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          bash build/init_autotools.sh
+          mkdir -p COMPILE
+          cd COMPILE
+          ../configure
+          make
+        shell: bash
