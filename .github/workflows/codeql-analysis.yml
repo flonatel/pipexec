@@ -37,10 +37,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-        with:
-          # This is needed as the version.sh script uses
-          # the history.
-          fetch-depth: 0
+      with:
+        # This is needed as the version.sh script uses
+        # the history.
+        fetch-depth: 0
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
