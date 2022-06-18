@@ -3,6 +3,9 @@
  *
  * eet (a reverse tee) for pipes / fds.
  * The program reads from different file descriptors and writes to one.
+ *
+ * Copyright 2015,2022 by Andreas Florath
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #define _POSIX_C_SOURCE 200809L

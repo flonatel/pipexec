@@ -3,7 +3,8 @@ pipexec
 
 Build a network of processes and connecting pipes - and have them act like a single process.
 
-[![Build Status](https://secure.travis-ci.org/flonatel/pipexec.png)](http://travis-ci.org/flonatel/pipexec)
+[![Build Status](https://github.com/flonatel/pipexec/actions/workflows/compile-check.yml/badge.svg)
+[![Code Check](https://github.com/flonatel/pipexec/actions/workflows/compile-check.yml/badge.svg)
 [![Release](https://img.shields.io/github/release/flonatel/pipexec.svg)](https://github.com/flonatel/pipexec/releases/latest)
 [![License](https://img.shields.io/github/license/flonatel/pipexec.svg)](#license)
 [![Issues](https://img.shields.io/github/issues/flonatel/pipexec.svg)](https://github.com/flonatel/pipexec/issues)
@@ -150,3 +151,9 @@ install pipexec with the distribution's package manager:
 
 There will be three binaries in the bin directory: pipexec, ptee and
 peet.  You can copy / install them as you need.
+
+# Copyright #
+
+copyright 2015,2022 by Andreas Florath
+
+License: see LICENSE file

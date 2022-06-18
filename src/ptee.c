@@ -5,6 +5,8 @@
  * This is like the 'normal' tee - except that it does not output to
  * different files but to differend fds.
  *
+ * Copyright 2015,2022 by Andreas Florath
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #define _POSIX_C_SOURCE 200809L

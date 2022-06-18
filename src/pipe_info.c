@@ -1,3 +1,6 @@
+// Copyright 2015,2022 by Andreas Florath
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #include "src/pipe_info.h"
 #include "src/logging.h"
 

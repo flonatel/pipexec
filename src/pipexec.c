@@ -3,6 +3,8 @@
  *
  * Build up a directed graph of processes and pipes.
  *
+ * Copyright 2015,2022 by Andreas Florath
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #define _POSIX_C_SOURCE 200809L
 #define _DEFAULT_SOURCE
