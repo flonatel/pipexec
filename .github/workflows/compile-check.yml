@@ -7,10 +7,11 @@ on: [push]
 jobs:
   compile:
     name: ${{ matrix.cenv.runs-on }}-${{ matrix.cenv.cc }}
-    matrix:
-      cenv:
-        - { runs-on: ubuntu-20.04, cc: gcc-9 }
-        - { runs-on: ubuntu-20.04, cc: gcc-10 }
+    strategy:
+      matrix:
+        cenv:
+          - { runs-on: ubuntu-20.04, cc: gcc-9 }
+          - { runs-on: ubuntu-20.04, cc: gcc-10 }
     runs-on: ${{ matrix.cenv.runs-on }}
     steps:
       - uses: actions/checkout@v3
