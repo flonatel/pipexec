@@ -14,7 +14,7 @@ struct command_info {
 
 typedef struct command_info command_info_t;
 
-void command_info_array_constrcutor(
+unsigned int command_info_array_constrcutor(
    command_info_t * icmd,
    int const start_argc, int const argc, char * argv[]);
 

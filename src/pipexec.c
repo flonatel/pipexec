@@ -374,13 +374,23 @@ int main(int argc, char *argv[]) {
   logging("Number of commands in command line [%d]", command_cnt);
   logging("Number of pipes in command line [%d]", pipe_cnt);
 
+  unsigned int handled_args = 0;
+
   command_info_t icmd[command_cnt];
-  command_info_array_constrcutor(icmd, optind, argc, argv);
+  handled_args += command_info_array_constrcutor(icmd, optind, argc, argv);
   command_info_array_print(icmd, command_cnt);
 
   pipe_info_t ipipe[pipe_cnt];
   pipe_info_parse(ipipe, optind, argc, argv, '>');
   pipe_info_print(ipipe, pipe_cnt);
+
+  logging("Number of handled args [%d]", handled_args);
+  logging("Not processed args [%d]", argc - optind - pipe_cnt - handled_args);
+
+  if(argc - optind - pipe_cnt - handled_args > 0) {
+    fprintf(stderr, "Error: rubbish / unparsable parameters given\n");
+    usage();
+  }
 
   // Provide memory for child_pids and initialize.
   pid_t child_pids[command_cnt];

@@ -105,8 +105,8 @@ Example:
     $ pipexec -- [ LS /bin/ls -l ] [ GREP /bin/grep LIC ] '{LS:1>GREP:0}'
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:36 LICENSE
 
-Be sure to escape pipe descriptions. Brackets '[]' must be separated by
-space!
+Be sure to escape pipe descriptions. Brackets for the command '[]' must be
+separated by space! Definitions for pipes '{}' must not contain spaces!
 
 It is possible to specify a fd for logging.
 
