@@ -11,12 +11,6 @@
 #include <errno.h>
 
 char *pipes_end_info_parse(pipes_end_info_t *const pend, char *const str) {
-
-  char *const colon = strchr(str, ':');
-  if (colon == NULL) {
-    logging("Invalid syntax: no colon in pipe desc found");
-    exit(1);
-  }
   /*
     GCC 12 introduces a new dangling pointer check.
     > dangling pointer ‘colon’ to ‘end_fd’ may be used
@@ -33,11 +27,18 @@ char *pipes_end_info_parse(pipes_end_info_t *const pend, char *const str) {
 #pragma GCC diagnostic ignored "-Wdangling-pointer"
 #endif
 #endif
+
+  char *const colon = strchr(str, ':');
+  if (colon == NULL) {
+    logging("Invalid syntax: no colon in pipe desc found");
+    exit(1);
+  }
   *colon = '\0';
   pend->name = str;
   char *end_fd;
   pend->fd = strtol(colon + 1, &end_fd, 10);
   return end_fd;
+
 #if __GNUC__ >= 12
 #ifndef __clang__
 #pragma GCC diagnostic pop
