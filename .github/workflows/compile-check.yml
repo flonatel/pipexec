@@ -12,6 +12,14 @@ jobs:
         cenv:
           - { runs-on: ubuntu-20.04, cc: gcc-9 }
           - { runs-on: ubuntu-20.04, cc: gcc-10 }
+          - { runs-on: ubuntu-20.04, cc: clang-10 }
+          - { runs-on: ubuntu-20.04, cc: clang-11 }
+          - { runs-on: ubuntu-20.04, cc: clang-12 }
+          - { runs-on: ubuntu-22.04, cc: gcc-9 }
+          - { runs-on: ubuntu-22.04, cc: gcc-10 }
+          - { runs-on: ubuntu-22.04, cc: gcc-11 }
+          - { runs-on: ubuntu-22.04, cc: clang-11 }
+          - { runs-on: ubuntu-22.04, cc: clang-12 }
     runs-on: ${{ matrix.cenv.runs-on }}
     steps:
       - uses: actions/checkout@v3
