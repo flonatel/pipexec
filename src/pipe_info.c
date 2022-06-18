@@ -14,11 +14,32 @@ char *pipes_end_info_parse(pipes_end_info_t *const pend, char *const str) {
     logging("Invalid syntax: no colon in pipe desc found");
     exit(1);
   }
+  /*
+    GCC 12 introduces a new dangling pointer check.
+    > dangling pointer ‘colon’ to ‘end_fd’ may be used
+    This is at this point a false positive as there is no way
+    to access 'end_fd' using 'colum' after returning from
+    this function.
+
+    Limit the diagnostics ignorance to GCC >= 12 as dangling-pointer
+    is not known to gcc-11 or clang 13.
+   */
+#if __GNUC__ >= 12
+#ifndef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
+#endif
+#endif
   *colon = '\0';
   pend->name = str;
   char *end_fd;
   pend->fd = strtol(colon + 1, &end_fd, 10);
   return end_fd;
+#if __GNUC__ >= 12
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif
+#endif
 }
 
 void pipe_info_print(pipe_info_t const *const ipipe, unsigned long const cnt) {
