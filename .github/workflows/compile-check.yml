@@ -6,13 +6,13 @@ on: [push]
 
 jobs:
   compile-gcc-10:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - run: |
           bash -x build/init_autotools.sh
           mkdir -p COMPILE
           cd COMPILE
-          ../configure
+          CC=gcc-10 ../configure
           make
         shell: bash
