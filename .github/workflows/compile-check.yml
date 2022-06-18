@@ -5,8 +5,13 @@ name: CompileCheck
 on: [push]
 
 jobs:
-  compile-gcc-10:
-    runs-on: ubuntu-20.04
+  compile:
+    name: ${{ matrix.cenv.runs-on }}-${{ matrix.cenv.cc }}
+    matrix:
+      cenv:
+        - { runs-on: ubuntu-20.04, cc: gcc-9 }
+        - { runs-on: ubuntu-20.04, cc: gcc-10 }
+    runs-on: ${{ matrix.cenv.runs-on }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -17,6 +22,6 @@ jobs:
           bash -x build/init_autotools.sh
           mkdir -p COMPILE
           cd COMPILE
-          CC=gcc-10 ../configure
+          CC=${{ matrix.cenv.cc }} ../configure
           make
         shell: bash
