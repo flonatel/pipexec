@@ -82,8 +82,8 @@ acts like a single process and supports pid file handling.
 
 # Usage
     $ ./pipexec -h
-    pipexec version 2.4
-    (c) 2014-2015 by Andreas Florath <andreas@florath.net>
+    pipexec version 2.5.5
+    (c) 2014-2015,2022 by Andreas Florath <andreas@florath.net>
     License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
 
     Usage: pipexec [options] -- process-pipe-graph
@@ -102,14 +102,15 @@ acts like a single process and supports pid file handling.
 
 Example:
 
-    $ pipexec -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}'
+    $ pipexec -- [ LS /bin/ls -l ] [ GREP /bin/grep LIC ] '{LS:1>GREP:0}'
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:36 LICENSE
 
-Be sure to escape pipe descriptions.
+Be sure to escape pipe descriptions. Brackets '[]' must be separated by
+space!
 
 It is possible to specify a fd for logging.
 
-    $ pipexec -l 2 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}'
+    $ pipexec -l 2 -- [ LS /bin/ls -l ] [ GREP /bin/grep LIC ] '{LS:1>GREP:0}'
     2014-05-15 16:30:35;pipexec;23978;pipexec version 2.4
     2014-05-15 16:30:35;pipexec;23978;Number of commands in command line [2]
     2014-05-15 16:30:35;pipexec;23978;Number of pipes in command line [1]
@@ -122,7 +123,7 @@ It is possible to specify a fd for logging.
 
 Or
 
-    $ pipexec -l 7 -- [LS /bin/ls -l ] [GREP /bin/grep LIC ] '{LS:1>GREP:0}' 7>/tmp/pipexec.log
+    $ pipexec -l 7 -- [ LS /bin/ls -l ] [ GREP /bin/grep LIC ] '{LS:1>GREP:0}' 7>/tmp/pipexec.log
     -rw-r--r-- 1 florath florath 18025 Mar 16 19:53 LICENSE
     $ head -2 /tmp/pipexec.log
     2014-05-15 16:30:35;pipexec;23978;pipexec version 2.4
