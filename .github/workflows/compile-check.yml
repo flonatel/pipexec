@@ -5,12 +5,12 @@ name: CompileCheck
 on: [push]
 
 jobs:
-  compile-gcc-12:
+  compile-gcc-10:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: |
-          bash build/init_autotools.sh
+          bash -x build/init_autotools.sh
           mkdir -p COMPILE
           cd COMPILE
           ../configure
