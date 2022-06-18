@@ -18,6 +18,7 @@ jobs:
           - { runs-on: ubuntu-22.04, cc: gcc-9 }
           - { runs-on: ubuntu-22.04, cc: gcc-10 }
           - { runs-on: ubuntu-22.04, cc: gcc-11 }
+          - { runs-on: ubuntu-22.04, cc: gcc-12 }
           - { runs-on: ubuntu-22.04, cc: clang-12 }
           - { runs-on: ubuntu-22.04, cc: clang-13 }
           - { runs-on: ubuntu-22.04, cc: clang-14 }
@@ -28,6 +29,8 @@ jobs:
           # This is needed as the version.sh script uses
           # the history.
           fetch-depth: 0
+      - name: "Install compiler - should in most cases be a noop"
+        run: sudo apt-get install -y ${{ matrix.cenv.cc }}
       - run: |
           bash -x build/init_autotools.sh
           mkdir -p COMPILE
