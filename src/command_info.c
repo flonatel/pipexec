@@ -73,7 +73,7 @@ static void command_info_constrcutor(
 }
 #endif
 
-void command_info_print(
-   command_info_t const * const self) {
-   logging("[%s] command_info path [%s]", self->cmd_name, self->path);
+void command_info_print(command_info_t const * const self) {
+  logging("command", "info", "command_info", 2,
+	  "command", self->cmd_name, "path", self->path);
 }
