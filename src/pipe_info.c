@@ -106,7 +106,7 @@ void pipe_info_create_pipes(pipe_info_t *const ipipe,
       perror("pipe");
       exit(10);
     }
-    LTOCHAR(spidx, 20, pidx);
+    SIZETTOCHAR(spidx, 20, pidx);
     ITOCHAR(sfrom_fd, 16, ipipe[pidx].pipefds[1]);
     ITOCHAR(sto_fd, 16, ipipe[pidx].pipefds[0]);
 
@@ -123,7 +123,7 @@ pipe_info_dup_in_piped_for_pipe_end(size_t const pidx, char *cmd_name,
                                     pipes_end_info_t const *const pend,
                                     int pipe_fd, int close_unused) {
   if (strcmp(cmd_name, pend->name) == 0) {
-    LTOCHAR(spidx, 20, pidx);
+    SIZETTOCHAR(spidx, 20, pidx);
     ITOCHAR(from_pipe_fd, 16, pipe_fd);
     ITOCHAR(to_pipe_fd, 16, pend->fd);
     logging(lid_internal, "pipe", "info", "dup", 5,
@@ -143,7 +143,7 @@ pipe_info_dup_in_piped_for_pipe_end(size_t const pidx, char *cmd_name,
     }
   } else {
     if (close_unused) {
-      LTOCHAR(spidx, 20, pidx);
+      SIZETTOCHAR(spidx, 20, pidx);
       ITOCHAR(from_pipe_fd, 16, pipe_fd);
       ITOCHAR(to_pipe_fd, 16, pend->fd);
       logging(lid_internal, "pipe", "info", "closing", 5,
@@ -168,7 +168,7 @@ void pipe_info_dup_in_pipes(pipe_info_t *ipipe, unsigned long pipe_cnt,
 void pipe_info_close_all(pipe_info_t const *const ipipe,
                          unsigned long const pipe_cnt) {
   for (size_t pidx = 0; pidx < pipe_cnt; ++pidx) {
-    LTOCHAR(spidx, 20, pidx);
+    SIZETTOCHAR(spidx, 20, pidx);
     ITOCHAR(from_fd, 16, ipipe[pidx].pipefds[1]);
     logging(lid_internal, "pipe", "info", "closing fd from", 2,
 	    "pipe_index", spidx, "fd", from_fd);

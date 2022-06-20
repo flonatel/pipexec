@@ -11,7 +11,7 @@
  */
 
 #define ITOCHAR(vNaMe, sIzE, vAr) char vNaMe[sIzE]; snprintf(vNaMe, sIzE, "%d", vAr)
-#define LTOCHAR(vNaMe, sIzE, vAr) char vNaMe[sIzE]; snprintf(vNaMe, sIzE, "%ld", vAr)
+#define SIZETTOCHAR(vNaMe, sIzE, vAr) char vNaMe[sIzE]; snprintf(vNaMe, sIzE, "%zu", vAr)
 
 void logging_text_set_global_log_fd(int fd);
 void logging_text_set_global_use_syslog();

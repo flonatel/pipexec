@@ -1,8 +1,14 @@
+# Version 2.6.1
+
+* Fixes 32 bit build
+  On 32 bit platforms size_t is not unsigned long.
+  Fixes size_t output.
+
 # Version 2.6.0
 
 * Check for duplicate pipe definition
   pipe endpoints can only be used once. If two times the same
-  source or sink were specified in the command line, the behaviour
+  source or sink were specified in the command line, the behavior
   was (and still is) undefined.
   Now a check was added that emits a error log, if a pipe endpoint
   is specified twice.

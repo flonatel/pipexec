@@ -10,18 +10,24 @@ jobs:
     strategy:
       matrix:
         cenv:
-          - { runs-on: ubuntu-20.04, cc: gcc-9 }
-          - { runs-on: ubuntu-20.04, cc: gcc-10 }
-          - { runs-on: ubuntu-20.04, cc: clang-10 }
-          - { runs-on: ubuntu-20.04, cc: clang-11 }
-          - { runs-on: ubuntu-20.04, cc: clang-12 }
-          - { runs-on: ubuntu-22.04, cc: gcc-9 }
-          - { runs-on: ubuntu-22.04, cc: gcc-10 }
-          - { runs-on: ubuntu-22.04, cc: gcc-11 }
-          - { runs-on: ubuntu-22.04, cc: gcc-12 }
-          - { runs-on: ubuntu-22.04, cc: clang-12 }
-          - { runs-on: ubuntu-22.04, cc: clang-13 }
-          - { runs-on: ubuntu-22.04, cc: clang-14 }
+          - { runs-on: ubuntu-20.04, cc: gcc-9, pkg: gcc-9 }
+          - { runs-on: ubuntu-20.04, cc: gcc-10, pkg: gcc-10 }
+          - { runs-on: ubuntu-20.04, cc: i686-linux-gnu-gcc-9, pkg: gcc-9-i686-linux-gnu }
+          - { runs-on: ubuntu-20.04, cc: i686-linux-gnu-gcc-10, pkg: gcc-10-i686-linux-gnu }
+          - { runs-on: ubuntu-20.04, cc: clang-10, pkg: clang-10 }
+          - { runs-on: ubuntu-20.04, cc: clang-11, pkg: clang-11 }
+          - { runs-on: ubuntu-20.04, cc: clang-12, pkg: clang-12 }
+          - { runs-on: ubuntu-22.04, cc: gcc-9, pkg: gcc-9 }
+          - { runs-on: ubuntu-22.04, cc: gcc-10, pkg: gcc-10 }
+          - { runs-on: ubuntu-22.04, cc: gcc-11, pkg: gcc-11 }
+          - { runs-on: ubuntu-22.04, cc: gcc-12, pkg: gcc-12 }
+          - { runs-on: ubuntu-22.04, cc: i686-linux-gnu-gcc-9, pkg: gcc-9-i686-linux-gnu }
+          - { runs-on: ubuntu-22.04, cc: i686-linux-gnu-gcc-10, pkg: gcc-10-i686-linux-gnu }
+          - { runs-on: ubuntu-22.04, cc: i686-linux-gnu-gcc-11, pkg: gcc-11-i686-linux-gnu }
+          - { runs-on: ubuntu-22.04, cc: i686-linux-gnu-gcc-12, pkg: gcc-12-i686-linux-gnu }
+          - { runs-on: ubuntu-22.04, cc: clang-12, pkg: clang-12 }
+          - { runs-on: ubuntu-22.04, cc: clang-13, pkg: clang-13 }
+          - { runs-on: ubuntu-22.04, cc: clang-14, pkg: clang-14 }
     runs-on: ${{ matrix.cenv.runs-on }}
     steps:
       - uses: actions/checkout@v3
