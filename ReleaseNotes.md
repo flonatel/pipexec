@@ -1,5 +1,11 @@
 # Version 2.6.0
 
+* Check for duplicate pipe definition
+  pipe endpoints can only be used once. If two times the same
+  source or sink were specified in the command line, the behaviour
+  was (and still is) undefined.
+  Now a check was added that emits a error log, if a pipe endpoint
+  is specified twice.
 * Added json logging
   Using the -j option pipexec now logs in json format that can be
   parsed.  This provides information about status and exit codes

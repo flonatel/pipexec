@@ -449,6 +449,7 @@ int main(int argc, char *argv[]) {
   pipe_info_t ipipe[pipe_cnt];
   pipe_info_parse(ipipe, optind, argc, argv, '>');
   pipe_info_print(ipipe, pipe_cnt);
+  pipe_info_check_for_duplicates(ipipe, pipe_cnt);
 
   ITOCHAR(shandled_args, 16, handled_args);
   logging(lid_internal, "command_line", "info", "Number of handled args", 1,
@@ -506,7 +507,7 @@ int main(int argc, char *argv[]) {
 	ITOCHAR(snormal_exit, 16, WIFEXITED(status));
 	ITOCHAR(schild_status, 16, WEXITSTATUS(status));
 	ITOCHAR(schild_signaled, 16, WIFSIGNALED(status));
-	logging(lid_child_exit, "tracing", "info", "child exit", 5,
+	logging(lid_child_exit, "exec", "info", "child exit", 5,
 		"command_pid", spid, "status", schild_status,
 		"normal_exit", snormal_exit, "child_status", schild_status,
 		"child_signaled", schild_signaled);

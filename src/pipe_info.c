@@ -217,3 +217,29 @@ void pipe_info_block_used_fds(pipe_info_t const *const ipipe,
     block_fd(&ipipe[pidx].to, block_pipefds[0]);
   }
 }
+
+#define PI_CHECK_FOR_DUPS(iPiPe, cNt, fOrT)				\
+  do {									\
+    for(unsigned long ocmp = 0; ocmp < cNt - 1; ++ocmp) {		\
+      for(unsigned long tcmp = ocmp + 1; tcmp < cNt; ++tcmp) {		\
+        if(strcmp(iPiPe[ocmp].fOrT.name, iPiPe[tcmp].fOrT.name) == 0 && \
+	   (iPiPe[ocmp].fOrT.fd == iPiPe[tcmp].fOrT.fd)) {		\
+           fprintf(stderr, "ERROR: Duplicate pipe in command line: [%s] [%s] [%d]\n", \
+		   #fOrT, iPiPe[ocmp].fOrT.name, iPiPe[ocmp].fOrT.fd);  \
+	   exit(1);                                                     \
+        }								\
+      }									\
+    }									\
+  } while(0)
+
+// Check for any duplicates in the from or the to pipes
+void pipe_info_check_for_duplicates(pipe_info_t const *const ipipe,
+				    unsigned long const cnt) {
+  // Handle simple case where there is no or only one pipe info
+  if(cnt <= 1) {
+    return;
+  }
+
+  PI_CHECK_FOR_DUPS(ipipe, cnt, from);
+  PI_CHECK_FOR_DUPS(ipipe, cnt, to);
+}
