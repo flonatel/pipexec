@@ -29,8 +29,14 @@ processes.
 print help and version information
 .TP
 \fB\-l logfd\fR
-use the given file descriptor for logging.  If a 's' is specified,
+use the given file descriptor for text logging.  If a 's' is specified,
 syslog is used.  Example: Specifying '2' means log to stderr.
+.TP
+\fB\-j logfd\fR
+use the given file descriptor for json logging.  If a 's' is specified,
+syslog is used.  Example: Specifying '2' means log to stderr.
+As this is meant to be parsed by other programs, this is an official and
+supported interface which is described in the JSON LOGGING chapter.
 .TP
 \fB\-p pidfile\fR
 with
@@ -120,6 +126,58 @@ The names are the names of the processes, the numbers are the number
 of the file descriptor that should be used to build the pipe in
 between.  When using pipexec from a shell (like bash) there is the
 need to escape the brackets or use quotation marks.
+.SH JSON LOGGING
+.B pipexec
+can log in JSON format. This is an official supported interface which is
+defined in this chapter. This can be seen as stable as no changes will
+be made during small version upgrades. Of course additions will be made
+also within minor upgrades, but this should be fine because of the underlaying
+JSON format.
+.P
+Each JSON log object (e.g. line) will be in a separate line.
+.P
+The following keys are always present:
+.TP
+\fBtimestamp\fR
+The timestamp is the time(0) (seconds since epoch) when the log in generated.
+.TP
+\fBpipexec_pid\fR
+The pid of the pipexec process.
+.TP
+\fBid\fR
+An id that specifies defined log objects.
+.TP
+\fBtype\fR
+An indicator in which internal module this log was generated.
+.TP
+\fBserverity\fR
+One of debug, info, warning, error.
+.TP
+\fBmessage\fR
+A short message describing the event.
+.P
+Depending on the id there might be additional fields which are described
+in the next section.
+.TP
+\fBid = 0\fR
+id of 0 is a special case: this is used for internal logs only. The
+logs are not documented and may change at any time. The information
+can be used to get an idea what currently happens in pipexec.
+.TP
+\fBid = 1\fR
+This gives information about the process ids (pids) of the commands.
+The field \fBcommand\fR contains the command (i.e. the part in the command
+before the colon. The field \fBcommand_pid\fR contains the pid of the
+command.
+.TP
+\fBid = 2\fR
+This log message is emitted when a child (command) exits. It contains some
+information about the exit status and termination reason of the command.
+The field \fBcommand_pid\fR contains the pid of the command which just
+terminated. The field \fBstatus\fR is the value which is set by
+\fBwaitpid(2)\fR. \fBnormal_exit\fR, \fBchild_status\fR and
+\fBchild_signaled\fR are \fBWIFEXITED\fR, \fBWEXITSTATUS\fR and
+\fBWIFSIGNALED\fR of the status respectively.
 .SH RETURN
 pipexec returns 1 if any of the child processes fails else 0 is
 returned.
@@ -140,6 +198,12 @@ The pipexec equivalent is longer and more complex in this example.
 But pipexec can build cycles that are impossible within a shell:
 .nf
     pipexec [ A /bin/cmd1 ] [ B /bin/cmd2 ] "{A:1>B:0}" "{B:1>A:0}"
+.fi
+.P
+When using json log, you get output like:
+.nf
+{"timestamp":1655706460,"pipexec_pid":42850,"id":1,"type":"exec","serverity":"info","message":"New child forked","command":"A","command_pid":"42851"}
+{"timestamp":1655706886,"pipexec_pid":42869,"id":2,"type":"tracing","serverity":"info","message":"child exit","command_pid":"42870","status":"1","normal_exit":"1","child_status":"1","child_signaled":"0"}
 .fi
 .P
 For more examples see the ptee(1) and peet(1) man pages.

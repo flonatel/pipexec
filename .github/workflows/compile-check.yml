@@ -37,4 +37,5 @@ jobs:
           cd COMPILE
           CC=${{ matrix.cenv.cc }} ../configure
           make
+          bash ../test/basic_tests.sh
         shell: bash

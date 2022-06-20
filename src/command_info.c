@@ -74,6 +74,6 @@ static void command_info_constrcutor(
 #endif
 
 void command_info_print(command_info_t const * const self) {
-  logging("command", "info", "command_info", 2,
+  logging(lid_internal, "command", "info", "command_info", 2,
 	  "command", self->cmd_name, "path", self->path);
 }

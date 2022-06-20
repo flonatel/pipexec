@@ -30,7 +30,7 @@ char *pipes_end_info_parse(pipes_end_info_t *const pend, char *const str) {
 
   char *const colon = strchr(str, ':');
   if (colon == NULL) {
-    logging("command_line", "error",
+    logging(lid_internal, "command_line", "error",
 	    "Invalid syntax: no colon in pipe desc found", 0);
     exit(1);
   }
@@ -52,7 +52,7 @@ void pipe_info_print(pipe_info_t const *const ipipe, unsigned long const cnt) {
     ITOCHAR(spidx, 16, pidx);
     ITOCHAR(sin_pipe_fd, 16, ipipe[pidx].from.fd);
     ITOCHAR(sout_pipe_fd, 16, ipipe[pidx].to.fd);
-    logging("pipe", "info", "pipe_info", 5,
+    logging(lid_internal, "pipe", "info", "pipe_info", 5,
 	    "pipe_index", spidx, "from_pipe_name", ipipe[pidx].from.name,
 	    "from_pipe_fd", sin_pipe_fd, "to_pipe_name", ipipe[pidx].to.name,
 	    "to_pipe_fd", sout_pipe_fd);
@@ -82,14 +82,14 @@ void pipe_info_parse(pipe_info_t *const ipipe, int const start_argc,
       char *const end_from =
           pipes_end_info_parse(&ipipe[pipe_no].from, &argv[i][1]);
       if (*end_from != sep) {
-        logging("command_line", "error", "Invalid syntax: no ':' in pipe desc found", 0);
+        logging(lid_internal, "command_line", "error", "Invalid syntax: no ':' in pipe desc found", 0);
         exit(1);
       }
 
       char *const end_to =
           pipes_end_info_parse(&ipipe[pipe_no].to, end_from + 1);
       if (*end_to != '}') {
-        logging("command_line", "error", "Invalid syntax: no '}' closing pipe desc found", 0);
+        logging(lid_internal, "command_line", "error", "Invalid syntax: no '}' closing pipe desc found", 0);
         exit(1);
       }
       ++pipe_no;
@@ -110,7 +110,7 @@ void pipe_info_create_pipes(pipe_info_t *const ipipe,
     ITOCHAR(sfrom_fd, 16, ipipe[pidx].pipefds[1]);
     ITOCHAR(sto_fd, 16, ipipe[pidx].pipefds[0]);
 
-    logging("pipe", "info", "pipe_created", 3,
+    logging(lid_internal, "pipe", "info", "pipe_created", 3,
 	    "pipe_index", spidx, "from_fd", sfrom_fd, "to_fd", sto_fd);
   }
 }
@@ -126,7 +126,7 @@ pipe_info_dup_in_piped_for_pipe_end(size_t const pidx, char *cmd_name,
     LTOCHAR(spidx, 20, pidx);
     ITOCHAR(from_pipe_fd, 16, pipe_fd);
     ITOCHAR(to_pipe_fd, 16, pend->fd);
-    logging("pipe", "info", "dup", 5,
+    logging(lid_internal, "pipe", "info", "dup", 5,
 	    "pipe_index", spidx, "command", cmd_name,
 	    "pipe_name", pend->name, "from_pipe_fd", from_pipe_fd,
 	    "to_pipe_fd", to_pipe_fd);
@@ -134,7 +134,7 @@ pipe_info_dup_in_piped_for_pipe_end(size_t const pidx, char *cmd_name,
     int const bfd = dup2(pipe_fd, pend->fd);
     if (bfd != pend->fd) {
       ITOCHAR(serrno, 16, errno);
-      logging("pipe", "error", "dup2", 7,
+      logging(lid_internal, "pipe", "error", "dup2", 7,
 	      "pipe_index", spidx, "command", cmd_name,
 	      "pipe_name", pend->name, "from_pipe_fd", from_pipe_fd,
 	      "to_pipe_fd", to_pipe_fd, "errno", serrno,
@@ -146,7 +146,7 @@ pipe_info_dup_in_piped_for_pipe_end(size_t const pidx, char *cmd_name,
       LTOCHAR(spidx, 20, pidx);
       ITOCHAR(from_pipe_fd, 16, pipe_fd);
       ITOCHAR(to_pipe_fd, 16, pend->fd);
-      logging("pipe", "info", "closing", 5,
+      logging(lid_internal, "pipe", "info", "closing", 5,
 	      "pipe_index", spidx, "command", cmd_name,
 	      "pipe_name", pend->name, "from_pipe_fd", from_pipe_fd,
 	      "to_pipe_fd", to_pipe_fd);
@@ -170,11 +170,11 @@ void pipe_info_close_all(pipe_info_t const *const ipipe,
   for (size_t pidx = 0; pidx < pipe_cnt; ++pidx) {
     LTOCHAR(spidx, 20, pidx);
     ITOCHAR(from_fd, 16, ipipe[pidx].pipefds[1]);
-    logging("pipe", "info", "closing fd from", 2,
+    logging(lid_internal, "pipe", "info", "closing fd from", 2,
 	    "pipe_index", spidx, "fd", from_fd);
     close(ipipe[pidx].pipefds[1]);
     ITOCHAR(to_fd, 16, ipipe[pidx].pipefds[0]);
-    logging("pipe", "info", "closing fd to", 2,
+    logging(lid_internal, "pipe", "info", "closing fd to", 2,
 	    "pipe_index", spidx, "fd", to_fd);
     close(ipipe[pidx].pipefds[0]);
   }
@@ -184,7 +184,7 @@ static void block_fd(pipes_end_info_t const *const pend, int blocking_fd) {
   if (pend->fd > 2 && pend->fd != blocking_fd) {
     ITOCHAR(pipe_fd, 16, pend->fd);
     ITOCHAR(sbfd, 16, blocking_fd);
-    logging("pipe", "info", "blocking_fd", 2,
+    logging(lid_internal, "pipe", "info", "blocking_fd", 2,
 	    "pipe_fd", pipe_fd, "blocking_fd", sbfd);
     int const bfd = dup2(blocking_fd, pend->fd);
     if (bfd != pend->fd) {
@@ -198,9 +198,9 @@ static void block_fd(pipes_end_info_t const *const pend, int blocking_fd) {
 // o dup2() one fd of this unused pipe for all later on used fds.
 void pipe_info_block_used_fds(pipe_info_t const *const ipipe,
                               unsigned long const cnt) {
-  logging("pipe", "info", "Blocking used fds", 0);
+  logging(lid_internal, "pipe", "info", "Blocking used fds", 0);
 
-  logging("pipe", "info", "Creating extra pipe for blocking fds", 0);
+  logging(lid_internal, "pipe", "info", "Creating extra pipe for blocking fds", 0);
   int block_pipefds[2];
   int const pres = pipe(block_pipefds);
   if (pres == -1) {
@@ -210,7 +210,7 @@ void pipe_info_block_used_fds(pipe_info_t const *const ipipe,
   // One is enough:
   close(block_pipefds[1]);
   ITOCHAR(sbfd, 16, block_pipefds[0]);
-  logging("pipe", "info", "fd for blocking", 1, "fd", sbfd);
+  logging(lid_internal, "pipe", "info", "fd for blocking", 1, "fd", sbfd);
 
   for (unsigned int pidx = 0; pidx < cnt; ++pidx) {
     block_fd(&ipipe[pidx].from, block_pipefds[0]);
