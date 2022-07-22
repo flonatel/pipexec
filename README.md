@@ -6,6 +6,7 @@ Build a network of processes and connecting pipes - and have them act like a sin
 [![Build Status](https://github.com/flonatel/pipexec/actions/workflows/compile-check.yml/badge.svg)](https://github.com/flonatel/pipexec/actions/workflows/compile-check.yml)
 [![Code Analysis](https://github.com/flonatel/pipexec/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/flonatel/pipexec/actions/workflows/codeql-analysis.yml)
 [![Release](https://img.shields.io/github/release/flonatel/pipexec.svg)](https://github.com/flonatel/pipexec/releases/latest)
+[![Packaging status](https://repology.org/badge/tiny-repos/pipexec.svg)](https://repology.org/project/pipexec/versions)
 [![License](https://img.shields.io/github/license/flonatel/pipexec.svg)](#license)
 [![Issues](https://img.shields.io/github/issues/flonatel/pipexec.svg)](https://github.com/flonatel/pipexec/issues)
 
