@@ -136,6 +136,7 @@ The following Linux distributions include the package.  You can
 install pipexec with the distribution's package manager:
 * [Debian](https://packages.debian.org/stretch/pipexec)
 * [Ubuntu](http://packages.ubuntu.com/wily/pipexec)
+* [Alpine Linux](https://pkgs.alpinelinux.org/packages?name=pipexec)
 * [Archlinux](https://aur.archlinux.org/packages/pipexec)
 * [Raspbian](https://www.raspbian.org/)
 * [Kali](http://www.kali.org)
