@@ -3,11 +3,11 @@
 .\"
 .\" For license, see the 'LICENSE' file.
 .\"
-.TH peet 1 2015-03-14 "User Commands" "User Commands"
+.TH peet 1 2023-03-27 "User Commands" "User Commands"
 .SH NAME
 peet \- piped reverse tee: read from many file descriptors and copy to one
 .SH SYNOPSIS
-peet [\-h] [\-w outfd] infd1 [infd2 ...]
+peet [\-h] [\-b size] [\-w outfd] infd1 [infd2 ...]
 .SH DESCRIPTION
 .B peet
 reads from many file descriptors and copies
@@ -15,9 +15,15 @@ everything to one file descriptor.  If no file descriptor is given
 ('\-w' option), 1 (stdout) is used.
 .P
 .B peet
-is text line based - i.e. only complete lines are written.  The order of
-lines written to the output file descriptor is pure random when there
-is more then one file descriptor where a complete line can be read from.
+without the \-b option
+reads the data which is available on each fd and writes it out to the
+output file descriptor. For each input fd one read is executed. This
+reads maximum 4096 bytes at once. For each read one write is executed.
+This means that the output data might be scattered randomly between
+the different input streams.
+.P
+When the \-b option is specified, the number is seen as bytes in a block.
+A write is executed only of complete blocks on the input buffer.
 .P
 .B peet
 can be used with
@@ -27,6 +33,9 @@ to de-multiplex text based output.
 .TP
 \fB\-h\fR
 print help and version information
+.TP
+\fB\-b num\fR
+Reads always num bytes before writing them.
 .TP
 \fB\-w outfd\fR
 use the given outfd as output file descriptor.  If this option is not
@@ -55,5 +64,5 @@ common log file: (The file descriptors 8 and 11 are chosen by random.)
 .SH AUTHOR
 Written by Andreas Florath (andreas@florath.net)
 .SH COPYRIGHT
-Copyright \(co 2015 by Andreas Florath (andreas@florath.net).
+Copyright \(co 2015,2023 by Andreas Florath (andreas@florath.net).
 License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.

@@ -16,9 +16,116 @@
 #include <stdio.h>
 #include <poll.h>
 #include <fcntl.h>
+#include <assert.h>
+#include <string.h>
 #include "src/version.h"
 
 size_t const buffer_size = 4096;
+
+/* This is the structure which is created for each file descriptor.
+   As the boundary read / write needs always complete blocks,
+   this includes also the buffer and the amount of valid data in the
+   buffer. */
+struct fddata_t {
+  char * m_buffer;
+  ssize_t m_buffer_size;
+  ssize_t m_buffer_used;
+  int m_use_boundary;
+  int m_eof_seen;
+};
+
+void fddata_init(struct fddata_t *self, struct pollfd *pfd, int fd,
+		 int use_boundary, int block_size) {
+  pfd->fd = fd;
+  pfd->events = POLLIN;
+
+  int const flags = fcntl(pfd->fd, F_GETFL, 0);
+  int const fret = fcntl(pfd->fd, F_SETFL, flags | O_NONBLOCK);
+  if (fret == -1) {
+    perror("fcntl nonblocking");
+    exit(2);
+  }
+
+  self->m_buffer_size = block_size;
+  self->m_buffer_used = 0;
+  self->m_buffer = malloc(block_size);
+
+  self->m_use_boundary = use_boundary;
+  self->m_eof_seen = 0;
+}
+
+void fddata_write(struct fddata_t *self, int write_fd, int use_debug_log) {
+
+  if (use_debug_log) {
+    fprintf(stderr, "WRITE len [%ld]\n", self->m_buffer_used);
+  }
+
+  ssize_t const wr = write(write_fd, self->m_buffer, self->m_buffer_used);
+
+  if (wr == -1) {
+    perror("write");
+    exit(2);
+  }
+
+  if (wr != self->m_buffer_used) {
+    perror("Could not write all data");
+    exit(2);
+  }
+
+  self->m_buffer_used = 0;
+}
+
+// Returns
+// 0 - if everything is fine - e.g. no state change
+// 1 - state change: eof_seen the first time
+int fddata_read_write(struct fddata_t *self, struct pollfd *pfd,
+		      int write_fd, int use_debug_log) {
+  // Ignore entries where eof was seen.
+  if(self->m_eof_seen) {
+    return 0;
+  }
+
+  if (pfd->revents & POLLIN) {
+
+    size_t const bytes_to_read = self->m_buffer_size - self->m_buffer_used;
+    ssize_t const bytes_read = read(
+       pfd->fd, self->m_buffer + self->m_buffer_used, bytes_to_read);
+    if (bytes_read < 0 && errno == EINTR)
+      return 0;
+    if (bytes_read < 0 && errno == EAGAIN)
+      // Fd would block
+      return 0;
+    if (bytes_read <= 0) {
+      // EOF from this fd
+      // The handling of this was finished.
+      // Write possible remaining data.
+      fddata_write(self, write_fd, use_debug_log);
+      if(use_debug_log) {
+	fprintf(stderr, "EOF [%d]", pfd->fd);
+      }
+      self->m_eof_seen = 1;
+      pfd->fd = -1;
+      return 1;
+    }
+    pfd->revents &= (!POLLIN);
+    self->m_buffer_used += bytes_read;
+    assert(self->m_buffer_used <= self->m_buffer_size);
+    if (! self->m_use_boundary || self->m_buffer_used == self->m_buffer_size) {
+      fddata_write(self, write_fd, use_debug_log);
+      return 0;
+    }
+  }
+
+  if (pfd->revents & POLLHUP) {
+    fddata_write(self, write_fd, use_debug_log);
+    self->m_eof_seen = 1;
+    pfd->fd = -1;
+    return 1;
+  }
+
+  // There are no fds to read from
+  return 0;
+}
 
 static void usage() {
   fprintf(stderr, "peet from pipexec version %s\n", app_version);
@@ -28,75 +135,55 @@ static void usage() {
   fprintf(stderr, "Usage: peet [options] fd [fd ...]\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr, " -h              display this help\n");
+  fprintf(stderr, " -b num          read num bytes from each input\n");
   fprintf(stderr, " -d              print some debug output\n");
   fprintf(stderr, " -w fd           fd to write to\n");
   exit(1);
 }
 
-int readable_fd_available(struct pollfd *fds, size_t fd_cnt) {
+int readable_fd_available(struct fddata_t *fddata, size_t fd_cnt) {
   for (size_t fdidx = 0; fdidx < fd_cnt; ++fdidx) {
-    if (fds[fdidx].fd >= 0) {
+    if (! fddata[fdidx].m_eof_seen) {
       return 1;
     }
   }
   return 0;
 }
 
-/*
- * Read from any of the signaled fds.
- * When a EOF is seen, handle the removal of the fd from the fds.
- */
-ssize_t read_from_fd(struct pollfd *fds, size_t fd_cnt, char *buffer) {
+// Returns:
+// 0 - no readable fd available
+// 1 - everything ok
+int read_write(struct fddata_t * fddata, struct pollfd * fds, int fd_cnt, int write_fd,
+	       int use_debug_log) {
 
-  for (size_t fdidx = 0; fdidx < fd_cnt; ++fdidx) {
-
-    // Ignore removed fd
-    if (fds[fdidx].fd < 0) {
-      continue;
-    }
-
-    if (fds[fdidx].revents & POLLIN) {
-      ssize_t const bytes_read = read(fds[fdidx].fd, buffer, buffer_size);
-      if (bytes_read < 0 && errno == EINTR)
-        continue;
-      if (bytes_read < 0 && errno == EAGAIN)
-        // Fd would block
-        continue;
-      if (bytes_read <= 0) {
-        // EOF from this fd
-        // The handling of this was finished.
-        fds[fdidx].fd = -1;
-        if (!readable_fd_available(fds, fd_cnt)) {
-          // There are no fds to read from
-          return -1;
-        }
-        continue;
+  for (int fdidx = 0; fdidx < fd_cnt; ++fdidx) {
+    int const eof_seen = fddata_read_write(&fddata[fdidx], &fds[fdidx], write_fd, use_debug_log);
+    if (eof_seen) {
+      if (use_debug_log) {
+	fprintf(stderr, "EOF SEEN idx [%d]\n", fdidx);
       }
-      fds[fdidx].revents &= (!POLLIN);
-      return bytes_read;
-    }
-
-    if (fds[fdidx].revents & POLLHUP) {
-      fds[fdidx].fd = -1;
-      if (!readable_fd_available(fds, fd_cnt)) {
-        // There are no fds to read from
-        return -1;
+      if (!readable_fd_available(fddata, fd_cnt)) {
+	return 0;
       }
-      continue;
     }
   }
-  // There are no fds to read from
-  return -1;
+  return 1;
 }
 
 int main(int argc, char *argv[]) {
 
   int write_fd = 1;
   int use_debug_log = 0;
+  int block_size = 4096;
+  int use_boundary = 0;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dhw:")) != -1) {
+  while ((opt = getopt(argc, argv, "b:dhw:")) != -1) {
     switch (opt) {
+    case 'b':
+      block_size = atoi(optarg);
+      use_boundary = 1;
+      break;
     case 'd':
       use_debug_log = 1;
       break;
@@ -118,23 +205,13 @@ int main(int argc, char *argv[]) {
 
   // All parameters are fds.
   size_t fd_cnt = argc - optind;
-  // The structure for fd_cnt events
+  // The structure for the fd data structs
+  struct fddata_t fddata[fd_cnt];
   struct pollfd fds[fd_cnt];
 
   size_t fdidx = 0;
   for (int aidx = optind; aidx < argc; ++aidx, ++fdidx) {
-    fds[fdidx].fd = atoi(argv[aidx]);
-    fds[fdidx].events = POLLIN;
-  }
-
-  // Set all the fds to nonblocking
-  for (size_t fdidx = 0; fdidx < fd_cnt; ++fdidx) {
-    int const flags = fcntl(fds[fdidx].fd, F_GETFL, 0);
-    int const fret = fcntl(fds[fdidx].fd, F_SETFL, flags | O_NONBLOCK);
-    if (fret == -1) {
-      perror("fcntl nonblocking");
-      exit(2);
-    }
+    fddata_init(&fddata[fdidx], &fds[fdidx], atoi(argv[aidx]), use_boundary, block_size);
   }
 
   while (1) {
@@ -150,33 +227,8 @@ int main(int argc, char *argv[]) {
       exit(2);
     }
 
-    char buffer[buffer_size];
-    ssize_t const bytes_read = read_from_fd(fds, fd_cnt, buffer);
-    if (bytes_read == -1) {
-      // No open FDs any more.
+    if( ! read_write(fddata, fds, fd_cnt, write_fd, use_debug_log) ) {
       break;
-    }
-
-    if (use_debug_log) {
-      ssize_t const wrl = write(write_fd, "PEET_DEBUG[", 11);
-      (void)wrl;
-    }
-
-    ssize_t const wr = write(write_fd, buffer, bytes_read);
-
-    if (use_debug_log) {
-      ssize_t const wrl = write(write_fd, "]", 1);
-      (void)wrl;
-    }
-
-    if (wr == -1) {
-      perror("write");
-      exit(2);
-    }
-
-    if (wr != bytes_read) {
-      perror("Could not write all data");
-      exit(2);
     }
   }
 
