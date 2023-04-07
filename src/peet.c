@@ -57,7 +57,7 @@ void fddata_init(struct fddata_t *self, struct pollfd *pfd, int fd,
 void fddata_write(struct fddata_t *self, int write_fd, int use_debug_log) {
 
   if (use_debug_log) {
-    fprintf(stderr, "WRITE len [%ld]\n", self->m_buffer_used);
+    fprintf(stderr, "WRITE len [%zd]\n", self->m_buffer_used);
   }
 
   ssize_t const wr = write(write_fd, self->m_buffer, self->m_buffer_used);
