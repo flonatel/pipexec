@@ -18,18 +18,30 @@ if ${PE} 2>/dev/null; then
     fail
 fi
 
+if [ -x /bin/true ]; then
+    TRUEPATH=/bin
+else
+    TRUEPATH=/usr/bin
+fi
+
+if [ -x /bin/grep ]; then
+    GREPPATH=/bin
+else
+    GREPPATH=/usr/bin
+fi
+
 echo "TEST: check return code when all childs succeed"
-if ! ${PE} -- [ A /bin/true ]; then
+if ! ${PE} -- [ A $TRUEPATH/true ]; then
     fail
 fi
 
 echo "TEST: check return code when one child fails"
-if ${PE} -- [ A /bin/true ] [ B /bin/false ] [ C /bin/true ]; then
+if ${PE} -- [ A $TRUEPATH/true ] [ B $TRUEPATH/false ] [ C $TRUEPATH/true ]; then
     fail
 fi
 
 echo "TEST: simple pipe"
-RES=$(./bin/pipexec -- [ ECHO /bin/echo Hello World ] [ CAT /bin/cat ] [ GREP /bin/grep Hello ] '{ECHO:1>CAT:0}' '{CAT:1>GREP:0}')
+RES=$(./bin/pipexec -- [ ECHO /bin/echo Hello World ] [ CAT /bin/cat ] [ GREP $GREPPATH/grep Hello ] '{ECHO:1>CAT:0}' '{CAT:1>GREP:0}')
 if test "${RES}" != "Hello World"; then
     fail
 fi
