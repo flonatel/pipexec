@@ -52,7 +52,7 @@ jobs:
         bash -x build/init_autotools.sh
         mkdir -p COMPILE
         cd COMPILE
-        CC=gcc-12 ../configure
+        CC=gcc-14 ../configure
         make
 
     - name: Perform CodeQL Analysis
