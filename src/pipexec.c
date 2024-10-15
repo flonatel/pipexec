@@ -100,8 +100,8 @@ void child_pids_print() {
       pbuf[poffset] = ',';
       ++poffset;
     }
-    poffset += snprintf(pbuf + poffset, plen, "%d", g_child_pids[child_idx]);
     plen = pilen - poffset;
+    poffset += snprintf(pbuf + poffset, plen, "%d", g_child_pids[child_idx]);
     first = false;
   }
   if(plen > 2) {
