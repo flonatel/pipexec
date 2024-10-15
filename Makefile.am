@@ -20,7 +20,7 @@ noinst_PROGRAMS =
 noinst_LTLIBRARIES =
 
 BUILT_SOURCES =
-CLEANFILES =
+CLEANFILES = src/app_version.c
 TESTS = 
 
 # Generics
