@@ -28,9 +28,18 @@ jobs:
           - { runs-on: ubuntu-22.04, cc: clang-12, pkg: clang-12 }
           - { runs-on: ubuntu-22.04, cc: clang-13, pkg: clang-13 }
           - { runs-on: ubuntu-22.04, cc: clang-14, pkg: clang-14 }
+          - { runs-on: ubuntu-24.04, cc: gcc-12, pkg: gcc-12 }
+          - { runs-on: ubuntu-24.04, cc: gcc-13, pkg: gcc-13 }
+          - { runs-on: ubuntu-24.04, cc: gcc-14, pkg: gcc-14 }
+          - { runs-on: ubuntu-24.04, cc: i686-linux-gnu-gcc-12, pkg: gcc-12-i686-linux-gnu }
+          - { runs-on: ubuntu-24.04, cc: i686-linux-gnu-gcc-13, pkg: gcc-13-i686-linux-gnu }
+          - { runs-on: ubuntu-24.04, cc: i686-linux-gnu-gcc-14, pkg: gcc-14-i686-linux-gnu }
+          - { runs-on: ubuntu-24.04, cc: clang-16, pkg: clang-16 }
+          - { runs-on: ubuntu-24.04, cc: clang-17, pkg: clang-17 }
+          - { runs-on: ubuntu-24.04, cc: clang-18, pkg: clang-18 }
     runs-on: ${{ matrix.cenv.runs-on }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # This is needed as the version.sh script uses
           # the history.
