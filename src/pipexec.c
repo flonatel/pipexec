@@ -364,7 +364,6 @@ static void write_pid_file(char const *const pid_file) {
     ITOCHAR(serrno, 16, errno);
     logging(lid_internal, "tracing", "error", "Cannot open pid file", 2,
 	    "error", strerror(errno), "errno", serrno);
-    close(fd);
     return;
   }
   ssize_t const written = write(fd, pbuf, plen);
