@@ -155,6 +155,6 @@ peet.  You can copy / install them as you need.
 
 # Copyright #
 
-copyright 2015,2022 by Andreas Florath
+copyright 2015, 2022, 2024 by Andreas Florath
 
 License: see LICENSE file

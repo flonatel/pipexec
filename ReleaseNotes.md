@@ -1,3 +1,14 @@
+# Version 2.6.2
+
+* Fixes by-one buffer overflow in rare cases:
+  When logging is enabled and at position 4096 a comma needs to
+  be written, then there was an buffer overwrite by one.
+* Upgraded CodeQL check to new version.
+* Upgraded Compile check to new version and added the following
+  compilers:
+  - gcc: 12, 13, 14 (using Ubuntu 24.04)
+  - clang: 16, 17, 18 (using Ubuntu 24.04)
+
 # Version 2.6.1
 
 * Fixes 32 bit build
