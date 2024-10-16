@@ -86,30 +86,51 @@ void child_pids_unset(pid_t cpid) {
 }
 
 void child_pids_print() {
-  int const pilen = 4096;
-  char pbuf[pilen];
+  int pilen = 4096;
+  char *pbuf = (char *)malloc(pilen * sizeof(char));
+  if (pbuf == NULL) {
+    logging(lid_internal, "status", "error", "Memory allocation failed", 0);
+    return;
+  }
   pbuf[0] = '[';
   int poffset = 1;
-  int plen = pilen - poffset;
   bool first = true;
+
   for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] == 0) {
       continue;
     }
-    if(! first && plen > 0) {
-      pbuf[poffset] = ',';
-      ++poffset;
+
+    if (!first) {
+      pbuf[poffset++] = ',';
     }
-    plen = pilen - poffset;
-    poffset += snprintf(pbuf + poffset, plen, "%d", g_child_pids[child_idx]);
+
+    while (poffset + 32 >= pilen) { // Ensure enough space for new data
+      pilen *= 2;
+      char *new_pbuf = (char *)realloc(pbuf, pilen * sizeof(char));
+      if (new_pbuf == NULL) {
+        free(pbuf);
+        logging(lid_internal, "status", "error", "Memory reallocation failed", 0);
+        return;
+      }
+      pbuf = new_pbuf;
+    }
+
+    int const written = snprintf(pbuf + poffset, pilen - poffset, "%d", g_child_pids[child_idx]);
+    if (written < 0) {
+      free(pbuf);
+      logging(lid_internal, "status", "error", "snprintf failed", 0);
+      return;
+    }
+    poffset += written;
     first = false;
   }
-  if(plen > 2) {
-      pbuf[poffset] = ']';
-      pbuf[poffset+1] = '\0';
-  }
+
+  pbuf[poffset++] = ']';
+  pbuf[poffset] = '\0';
 
   logging(lid_internal, "status", "info", "Child pids", 1, "pids", pbuf);
+  free(pbuf);
 }
 
 void child_pids_kill_all() {
