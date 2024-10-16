@@ -23,7 +23,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
@@ -41,6 +41,8 @@ jobs:
         # This is needed as the version.sh script uses
         # the history.
         fetch-depth: 0
+    - name: "Install compiler - should in most cases be a noop"
+      run: sudo apt-get install -y gcc-14
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
