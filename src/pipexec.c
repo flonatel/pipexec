@@ -67,14 +67,14 @@ void set_terminate() {
  * This needs to be global, because it is also accessed from the
  * interrupt handler.
  */
-volatile unsigned int g_child_cnt = 0;
+volatile int g_child_cnt = 0;
 volatile pid_t *g_child_pids = NULL;
 
 /**
  * Unset the given pid.
  */
 void child_pids_unset(pid_t cpid) {
-  for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
+  for (int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] == cpid) {
       g_child_pids[child_idx] = 0;
       return;
@@ -96,7 +96,7 @@ void child_pids_print() {
   int poffset = 1;
   bool first = true;
 
-  for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
+  for (int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] == 0) {
       continue;
     }
@@ -139,7 +139,7 @@ void child_pids_kill_all() {
     return;
   }
 
-  for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
+  for (int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] != 0) {
       pid_t const to_kill = g_child_pids[child_idx];
       ITOCHAR(skill, 16, to_kill);
@@ -150,7 +150,7 @@ void child_pids_kill_all() {
 }
 
 void child_pids_wait_all() {
-  for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
+  for (int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] != 0) {
       pid_t const to_wait = g_child_pids[child_idx];
       ITOCHAR(swait, 16, to_wait);
@@ -321,8 +321,8 @@ int pipe_execv(command_info_t *const icmd, size_t const command_cnt,
   return 0;
 }
 
-unsigned int next_running_child() {
-  for (unsigned int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
+int next_running_child() {
+  for (int child_idx = 0; child_idx < g_child_cnt; ++child_idx) {
     if (g_child_pids[child_idx] != 0) {
       return child_idx;
     }
@@ -451,8 +451,8 @@ int main(int argc, char *argv[]) {
 
   install_signal_handler();
 
-  unsigned int const command_cnt = command_info_clp_count(optind, argc, argv);
-  unsigned int const pipe_cnt = pipe_info_clp_count(optind, argc, argv);
+  int const command_cnt = command_info_clp_count(optind, argc, argv);
+  int const pipe_cnt = pipe_info_clp_count(optind, argc, argv);
 
   ITOCHAR(scommand_cnt, 16, command_cnt);
   logging(lid_internal, "command_line", "info", "Number of commands", 1,
@@ -461,7 +461,7 @@ int main(int argc, char *argv[]) {
   logging(lid_internal, "command_line", "info", "Number of pipes", 1,
 	  "command_cnt", scommand_cnt);
 
-  unsigned int handled_args = 0;
+  int handled_args = 0;
 
   command_info_t icmd[command_cnt];
   handled_args += command_info_array_constrcutor(icmd, optind, argc, argv);
@@ -475,12 +475,12 @@ int main(int argc, char *argv[]) {
   ITOCHAR(shandled_args, 16, handled_args);
   logging(lid_internal, "command_line", "info", "Number of handled args", 1,
 	  "handled_args", shandled_args);
-  unsigned int const not_processed_args = argc - optind - pipe_cnt - handled_args;
+  int const not_processed_args = argc - optind - pipe_cnt - handled_args;
   ITOCHAR(snot_processed_args, 16, not_processed_args);
   logging(lid_internal, "command_line", "info", "Not processed args", 1,
 	  "not_processed_args", snot_processed_args);
 
-  if(argc - optind - pipe_cnt - handled_args > 0) {
+  if(not_processed_args > 0) {
     logging(lid_internal, "command_line", "error",
 	    "Error: rubbish / unparsable parameters given", 0);
     usage();
@@ -488,7 +488,7 @@ int main(int argc, char *argv[]) {
 
   // Provide memory for child_pids and initialize.
   pid_t child_pids[command_cnt];
-  for (unsigned int i = 0; i < command_cnt; ++i) {
+  for (int i = 0; i < command_cnt; ++i) {
     child_pids[i] = 0;
   }
   g_child_pids = child_pids;
